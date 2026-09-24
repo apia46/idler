@@ -9,10 +9,10 @@ pub struct Number {
     exponent: f64, // integer
 }
 
-pub const NAN:Number = Number {mantissa: f64::NAN, exponent: f64::NAN};
+pub const NAN:Number = Number { mantissa: f64::NAN, exponent: f64::NAN };
 
 impl Number {
-    fn new(value: f64) -> Self {
+    pub fn new(value:f64) -> Self {
         const MIN_POS:f64 = f64::from_bits(1);
 
         let sign:f64 = value.signum();
