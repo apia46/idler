@@ -1,3 +1,4 @@
+#![expect(dead_code)]
 pub const BASE:f64 = f64::from_bits(0x5FF0000000000000); // 2^512
 pub const R_BASE:f64 = 1./BASE;
 
