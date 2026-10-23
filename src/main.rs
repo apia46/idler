@@ -1,4 +1,4 @@
-use winit::{application::ApplicationHandler, event_loop::ActiveEventLoop, window::Window};
+use winit::{application::ApplicationHandler, error::EventLoopError, event::WindowEvent, event_loop::{ActiveEventLoop, EventLoop}, window::{Window, WindowId}};
 use std::sync::Arc;
 
 pub mod num;
@@ -14,10 +14,20 @@ impl ApplicationHandler for App {
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
         self.window = Some(window);
     }
+
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, window_id: WindowId, event: WindowEvent) {
+        match event {
+            WindowEvent::CloseRequested => event_loop.exit(),
+            WindowEvent::KeyboardInput { device_id, event, is_synthetic } => {
+                println!("{event:?}");
+            },
+            _ => {},
+        }
+    }
 }
 
 impl App {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         App {
             window:None
         }
@@ -30,7 +40,10 @@ impl App {
 
 
 
-fn main() {
-    
+fn main() -> Result<(), EventLoopError> {
+    env_logger::init();
+    let event_loop = EventLoop::with_user_event().build().unwrap();
+    let mut app = App::new();
+    event_loop.run_app(&mut app)
 }
 
