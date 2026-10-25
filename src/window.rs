@@ -24,6 +24,11 @@ impl Window {
         Self { window, render_context, surface, renderer, valid_surface: true }
     }
 
+    pub fn request_redraw(&self) {
+        self.window.request_redraw();
+    }
+
+
     pub fn resize(&mut self, size:PhysicalSize<u32>) {
         if size.width == 0 && size.height == 0 {
             self.valid_surface = false;
@@ -33,15 +38,14 @@ impl Window {
         }
     }
 
-    pub fn render(&mut self, scene: &Scene) {
+    pub fn render<'a>(&'a mut self, scene: impl FnOnce()->&'a Scene) {
         if !self.valid_surface { return; }
-
         let device_handle = &self.render_context.devices[self.surface.dev_id];
         self.renderer
             .render_to_texture(
                 &device_handle.device,
                 &device_handle.queue,
-                scene,
+                scene(),
                 &self.surface.target_view,
                 &vello::RenderParams {
                     base_color: vello::peniko::Color::new([0.1, 0.2, 0.3, 1.0]),

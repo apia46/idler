@@ -1,10 +1,14 @@
 use parley::{Alignment, AlignmentOptions, FontContext, FontWeight, GenericFamily, LayoutContext, PositionedLayoutItem, StyleProperty};
-use vello::{Scene, kurbo::{Affine, Rect}, peniko::{Fill, color::{AlphaColor, Rgba8, Srgb}}};
+use vello::{Scene, kurbo::{Affine, Rect}, peniko::{Color, Fill, Gradient, ImageBrush, ImageData, color::{AlphaColor, Hsl, Srgb}}};
+
+pub use state::RenderState;
+
+mod state;
 
 pub struct Renderer {
     scene: Scene,
     font_cx: FontContext,
-    layout_cx: LayoutContext,
+    layout_cx: LayoutContext<ColorBrush>,
 }
 
 impl Renderer {
@@ -16,15 +20,17 @@ impl Renderer {
         }
     }
 
-    pub fn draw_scene(&mut self) -> &Scene {
+    pub fn draw_scene(&mut self, state:&mut RenderState) -> &Scene {
+        let current_frame = state.start_time.elapsed();
         self.scene.reset();
-        let text = "vello hro";
-        let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, text, 1., true);
+        let text = format!("vello hro... the current time is: {}", current_frame.as_secs_f32());
+        let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, &text, 1., true);
         builder.push_default(GenericFamily::SystemUi);
         builder.push_default(StyleProperty::FontSize(16.));
         builder.push_default(FontWeight::new(400.));
-        builder.push_default(StyleProperty::Brush([255,255,255,255]));
-        let mut layout = builder.build(text);
+        let color = AlphaColor::<Hsl>::new([(current_frame.as_millis() as f32 / 10.) % 360., 100., 50., 1.]).convert();
+        builder.push_default(StyleProperty::Brush(ColorBrush(color)));
+        let mut layout = builder.build(&text);
         layout.break_all_lines(None);
         layout.align(Alignment::Start, AlignmentOptions::default());
         for line in layout.lines() {
@@ -36,7 +42,8 @@ impl Renderer {
                         self.scene.draw_glyphs(run.font())
                             .font_size(run.font_size())
                             .normalized_coords(coords)
-                            .brush(AlphaColor::from(Rgba8::from_u8_array(glyph_run.style().brush)))
+                            .transform(Affine::translate((40., 40.)))
+                            .brush(glyph_run.style().brush)
                             .draw(Fill::NonZero, glyph_run.positioned_glyphs().map(|g| {
                                 vello::Glyph { id: g.id, x: g.x, y: g.y }
                             }));
@@ -51,16 +58,23 @@ impl Renderer {
                 }
             }
         }
-
+        state.previous_frame = current_frame;
         &self.scene
     }
 }
-//let circle = Circle::new((420.0, 200.0), 120.0);
-        //let circle_fill_color = Color::new([0.9529, 0.5451, 0.6588, 1.]);
-        //self.scene.fill(
-        //    vello::peniko::Fill::NonZero,
-        //    Affine::IDENTITY,
-        //    circle_fill_color,
-        //    None,
-        //    &circle,
-        //);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct ColorBrush(Color);
+
+impl Default for ColorBrush {
+    fn default() -> Self {
+        ColorBrush(Color::BLACK)
+    }
+}
+
+impl From<ColorBrush> for vello::peniko::Brush<ImageBrush<&ImageData>, &Gradient> {
+    fn from(ColorBrush(value): ColorBrush) -> Self {
+        value.into()
+    }
+}
+

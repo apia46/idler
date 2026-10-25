@@ -1,20 +1,10 @@
-use winit::error::EventLoopError;
+use winit::{error::EventLoopError, event_loop::ActiveEventLoop};
 
-use game::Game;
-use window::Window;
-use renderer::Renderer;
+use crate::app::App;
+use crate::window::Window;
+use crate::renderer::{Renderer, RenderState};
 
-/*
- * EventLoop
- * runs the ApplicationHandler (always exists when eventloop does)
- * handles the App (doesnt always exist)
- * contains:
- * - winit and wgpu and vello stuff
- * - rendering
- * - game state
- */
-
-mod game;
+mod app;
 mod window;
 mod renderer;
 
@@ -22,13 +12,24 @@ pub mod num;
 pub mod num2;
 
 
-struct App {
+struct Game {
     window: Window,
     renderer: Renderer,
+    render_state: RenderState,
+}
+
+impl Game {
+    async fn new(event_loop:&ActiveEventLoop) -> Game {
+        Game {
+            window: Window::new(event_loop).await,
+            renderer: Renderer::new(),
+            render_state: RenderState::new(),
+        }
+    }
 }
 
 fn main() -> Result<(), EventLoopError> {
     env_logger::init();
-    Game::new().run()
+    App::new().run()
 }
 
