@@ -15,6 +15,8 @@
             vulkan-headers
             vulkan-loader
             vulkan-tools
+            pkg-config
+            fontconfig
         ];
     };
   }

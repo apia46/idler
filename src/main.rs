@@ -1,4 +1,5 @@
-use wgpu::{BackendOptions, CommandEncoder, DeviceDescriptor, InstanceFlags, PowerPreference, RequestAdapterOptions, TextureView};
+use vello::{AaConfig, Renderer, RendererOptions, Scene, kurbo::{Affine, Circle}, peniko::Color, util::{RenderContext, RenderSurface}};
+use wgpu::{CurrentSurfaceTexture, TextureViewDescriptor, wgt::CommandEncoderDescriptor};
 use winit::{application::ApplicationHandler, dpi::PhysicalSize, error::EventLoopError, event::WindowEvent, event_loop::{ActiveEventLoop, EventLoop}, window::{Window, WindowId}};
 use std::sync::Arc;
 use futures::executor::block_on;
@@ -31,123 +32,99 @@ impl ApplicationHandler for AppHandler {
 
 struct App {
     window: Arc<Window>,
-    surface: wgpu::Surface<'static>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
+    render_context:RenderContext,
+    surface: RenderSurface<'static>,
+    renderers: Vec<Option<Renderer>>,
+    valid_surface: bool,
+    scene: Scene,
 }
 
 impl App {
     async fn new(event_loop:&ActiveEventLoop) -> Self {
         let window = Arc::new(event_loop.create_window(Window::default_attributes()).unwrap());
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY,
-            flags: InstanceFlags::default(),
-            memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(), 
-            backend_options: BackendOptions::from_env_or_default(),
-            display: Some(Box::new(window.clone()))
-        });
-        let surface = instance.create_surface(window.clone()).unwrap();
-
-        let adapter = instance.request_adapter(&RequestAdapterOptions {
-            power_preference: PowerPreference::default(),
-            compatible_surface: Some(&surface),
-            force_fallback_adapter: false,
-            apply_limit_buckets: true,
-        }).await.unwrap();
-
-        let (device, queue) = adapter.request_device(&DeviceDescriptor {
-            label: None, required_features: wgpu::Features::empty(), experimental_features: wgpu::ExperimentalFeatures::disabled(),
-            required_limits: wgpu::Limits::default(), memory_hints: wgpu::MemoryHints::default(), trace: wgpu::Trace::Off,
-        }).await.unwrap();
-
-        let surface_caps = surface.get_capabilities(&adapter);
-        let surface_format = surface_caps.formats.iter()
-            .find(|f| f.is_srgb())
-            .copied()
-            .unwrap_or(surface_caps.formats[0]);
-
         let size = window.inner_size();
+        let mut render_context = RenderContext::new();
+        // this also creates the device
+        let surface = render_context.create_surface(window.clone(), size.width, size.height, wgpu::PresentMode::AutoVsync).await.unwrap();
+        let mut renderers = vec![];
+        renderers.resize_with(render_context.devices.len(), || None);
+        renderers[surface.dev_id].get_or_insert_with(||
+            Renderer::new(&render_context.devices[surface.dev_id].device, RendererOptions::default()).unwrap()
+        );
+        let scene = Scene::new();
 
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
-            width: size.width,
-            height: size.height,
-            present_mode: surface_caps.present_modes[0],
-            alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
-            desired_maximum_frame_latency: 2,
-            color_space: wgpu::SurfaceColorSpace::Auto,
-        };
+
         Self {
-            window: window.clone(),
-            surface, device, queue, config
+            window, render_context, surface, renderers, valid_surface: true, scene
         }
     }
 
     fn resize(&mut self, size:PhysicalSize<u32>) {
-        self.config.width = size.width;
-        self.config.height = size.height;
-        self.surface.configure(&self.device, &self.config);
+        if size.width == 0 && size.height == 0 {
+            self.valid_surface = false;
+        } else {
+            self.render_context.resize_surface(&mut self.surface, size.width, size.height);
+            self.valid_surface = true;
+        }
     }
 
     fn render(&mut self) {
-        self.window.request_redraw();
+        if !self.valid_surface { return; }
+        self.scene.reset();
 
-        let output = match self.surface.get_current_texture() {
-            wgpu::CurrentSurfaceTexture::Success(surface_texture) => surface_texture,
-            wgpu::CurrentSurfaceTexture::Suboptimal(surface_texture) => {
-                surface_texture
-            }
-            wgpu::CurrentSurfaceTexture::Timeout
-            | wgpu::CurrentSurfaceTexture::Occluded
-            | wgpu::CurrentSurfaceTexture::Validation => {
-                // Skip this frame
+        draw(&mut self.scene);
+
+        let device_handle = &self.render_context.devices[self.surface.dev_id];
+        self.renderers[self.surface.dev_id]
+            .as_mut()
+            .unwrap()
+            .render_to_texture(
+                &device_handle.device,
+                &device_handle.queue,
+                &self.scene,
+                &self.surface.target_view,
+                &vello::RenderParams {
+                    base_color: vello::peniko::Color::new([0.1, 0.2, 0.3, 1.0]),
+                    width: self.surface.config.width,
+                    height: self.surface.config.height,
+                    antialiasing_method: AaConfig::Msaa16,
+                }
+            ).unwrap();
+
+        let surface_texture = match self.surface.surface.get_current_texture() {
+            CurrentSurfaceTexture::Success(surface_texture) => surface_texture,
+            CurrentSurfaceTexture::Outdated | CurrentSurfaceTexture::Suboptimal(_) => {
+                self.render_context.configure_surface(&self.surface);
+                self.window.request_redraw();
                 return;
-            }
-            wgpu::CurrentSurfaceTexture::Outdated => {
-                self.surface.configure(&self.device, &self.config);
+            },
+            CurrentSurfaceTexture::Occluded | CurrentSurfaceTexture::Timeout => {
+                self.window.request_redraw();
                 return;
-            }
-            wgpu::CurrentSurfaceTexture::Lost => {
-                // You could recreate the devices and all resources
-                // created with it here, but we'll just bail
-                panic!();
-            }
+            },
+            CurrentSurfaceTexture::Lost => panic!("Surface was lost"),
+            CurrentSurfaceTexture::Validation => panic!("Surface validation error"),
         };
-        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Render Encoder"),
-        });
-        Self::render_pass(&mut encoder, &view);
-        self.queue.submit(std::iter::once(encoder.finish()));
-        self.queue.present(output);
-    }
+        let view = surface_texture.texture.create_view(&TextureViewDescriptor::default());
 
-    fn render_pass(encoder:&mut CommandEncoder, view:&TextureView) {
-        let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Render Pass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: view,
-                resolve_target: None,
-                depth_slice: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.1,
-                        g: 0.2,
-                        b: 0.3,
-                        a: 1.0,
-                    }),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-            occlusion_query_set: None,
-            timestamp_writes: None,
-            multiview_mask: None,
-        });
+        let mut encoder = device_handle.device.create_command_encoder(&CommandEncoderDescriptor::default());
+        self.surface.blitter.copy(&device_handle.device, &mut encoder, &self.surface.target_view, &view);
+        device_handle.queue.submit([encoder.finish()]);
+        device_handle.queue.present(surface_texture);
+        device_handle.device.poll(wgpu::PollType::Poll).unwrap();
     }
+}
+
+fn draw(scene:&mut Scene) {
+    let circle = Circle::new((420.0, 200.0), 120.0);
+    let circle_fill_color = Color::new([0.9529, 0.5451, 0.6588, 1.]);
+    scene.fill(
+        vello::peniko::Fill::NonZero,
+        Affine::IDENTITY,
+        circle_fill_color,
+        None,
+        &circle,
+    );
 }
 
 fn main() -> Result<(), EventLoopError> {
