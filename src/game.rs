@@ -37,8 +37,7 @@ impl ApplicationHandler for AppHandler {
         match (event, &mut self.app) {
             (WindowEvent::CloseRequested, _) => event_loop.exit(),
             (WindowEvent::Resized(size), Some(app)) => app.window.resize(size),
-            (WindowEvent::KeyboardInput { device_id:_ , event, is_synthetic:_ }, _) => {
-                println!("{event:?}");
+            (WindowEvent::KeyboardInput { device_id:_ , event:_, is_synthetic:_ }, _) => {
             },
             (WindowEvent::RedrawRequested, Some(app)) => {
                 app.window.render(app.renderer.draw_scene());
