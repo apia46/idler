@@ -22,8 +22,11 @@ impl Renderer {
 
     pub fn draw_scene(&mut self, state:&mut RenderState) -> &Scene {
         let current_frame = state.start_time.elapsed();
+        let delta = (current_frame - state.previous_frame).as_secs_f64();
+        state.things += state.things_per_second * delta.into();
+
         self.scene.reset();
-        let text = format!("vello hro... the current time is: {}", current_frame.as_secs_f32());
+        let text = format!("things: {}\nthings per second: {}\nclick to convert things to things per second", state.things, state.things_per_second);
         let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, &text, 1., true);
         builder.push_default(GenericFamily::SystemUi);
         builder.push_default(StyleProperty::FontSize(16.));

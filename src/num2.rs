@@ -1,4 +1,6 @@
-use std::ops::{Add, AddAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::{fmt::Display, ops::{Add, AddAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign}};
+
+const LN_INF:f64 = 709.78271289338399684324569237317280570931213758490138021957632972;
 
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Number(f64);
@@ -9,11 +11,17 @@ impl Number {
     }
 
     fn add_lesser(self, Number(value):Self) -> Self {
-        Number(self.0 + f64::ln(1.+f64::exp(value-self.0)))
+        if value == f64::NEG_INFINITY { self }
+        else { Number(self.0 + f64::ln(1.+f64::exp(value-self.0))) }
     }
 
     fn sub_lesser(self, Number(value):Self) -> Self {
-        Number(self.0 + f64::ln(1.-f64::exp(value-self.0)))
+        if value == f64::NEG_INFINITY { self }
+        else { Number(self.0 + f64::ln(1.-f64::exp(value-self.0))) }
+    }
+
+    pub fn ln(self) -> f64 {
+        self.0
     }
 }
 
@@ -22,6 +30,13 @@ impl From<f64> for Number {
         Self::new(value)
     }
 }
+
+impl From<i32> for Number {
+    fn from(value: i32) -> Self {
+        Self::new(value.into())
+    }
+}
+
 
 impl Mul for Number {
     type Output = Number;
@@ -92,8 +107,13 @@ impl BitXorAssign for Number {
     }
 }
 
-impl ToString for Number {
-    fn to_string(&self) -> String {
-        self.0.exp().to_string()
+impl Display for Number {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&if self.0 < LN_INF {
+            self.0.exp().to_string()
+        } else {
+            format!("e{}", self.0 / std::f64::consts::LN_10)
+        })
     }
 }
+

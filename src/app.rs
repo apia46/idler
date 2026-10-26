@@ -1,4 +1,4 @@
-use winit::{application::ApplicationHandler, error::EventLoopError, event::WindowEvent, event_loop::{ActiveEventLoop, EventLoop}, window::WindowId};
+use winit::{application::ApplicationHandler, error::EventLoopError, event::{ElementState, MouseButton, WindowEvent}, event_loop::{ActiveEventLoop, EventLoop}, window::WindowId};
 
 use crate::Game;
 
@@ -35,6 +35,10 @@ impl ApplicationHandler for AppHandler {
             (WindowEvent::CloseRequested, _) => event_loop.exit(),
             (WindowEvent::Resized(size), Some(game)) => game.window.resize(size),
             (WindowEvent::KeyboardInput { device_id:_ , event:_, is_synthetic:_ }, _) => {
+            },
+            (WindowEvent::MouseInput { device_id:_, state:ElementState::Pressed, button:MouseButton::Left }, Some(game)) => {
+                game.render_state.things_per_second += game.render_state.things;
+                game.render_state.things = 0.into();
             },
             (WindowEvent::RedrawRequested, Some(game)) => {
                 game.window.render(|| game.renderer.draw_scene(&mut game.render_state));
