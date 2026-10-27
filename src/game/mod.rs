@@ -51,7 +51,7 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
             position: Point::new(240., 120.),
             size: Size::new(200., 100.),
             text: |s| format!("Reset things and convert\nthings per second into\n{:.3}\nthings mult", expr(s)),
-            enabled: |s| s.things_per_second > Number::ZERO,
+            enabled: |s| expr(s) > Number::ZERO,
             pressed: |s| {
                 s.things_mult += expr(s);
                 s.things_per_second = Number::ZERO;
