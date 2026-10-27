@@ -1,9 +1,9 @@
-use parley::{Alignment, AlignmentOptions, FontContext, FontWeight, GenericFamily, LayoutContext, PositionedLayoutItem, StyleProperty};
+use parley::{Layout, Alignment, AlignmentOptions, FontContext, FontWeight, GenericFamily, LayoutContext, PositionedLayoutItem, StyleProperty};
 use vello::{Scene, kurbo::{Affine, Rect, Vec2}, peniko::{Color, Fill, Gradient, ImageBrush, ImageData, color::{AlphaColor, Srgb}}};
 
 pub use state::RenderState;
 
-use crate::game::GameState;
+use crate::{game::GameState, input::InputState};
 
 mod state;
 pub mod button;
@@ -18,13 +18,14 @@ pub struct Renderer {
 
 pub struct DrawRectArgs {
     rect: Rect,
+    color: Color,
 }
 
-
-pub struct DrawTextArgs<'a> {
-    position: Vec2,
+pub struct BuildTextArgs<'a> {
     text: &'a str,
 }
+
+pub type TextLayout = Option<Layout<ColorBrush>>;
 
 impl Renderer {
     pub fn draw_scene(&mut self, state:&RenderState) -> &Scene {
@@ -34,10 +35,10 @@ impl Renderer {
     }
 
     pub fn draw_rect(&mut self, args:DrawRectArgs) {
-        self.scene.fill(Fill::NonZero, Affine::default(), Color::BLACK, None, &args.rect);
+        self.scene.fill(Fill::NonZero, Affine::default(), args.color, None, &args.rect);
     }
 
-    pub fn draw_text(&mut self, args:DrawTextArgs) {
+    pub fn build_text(&mut self, args:BuildTextArgs) -> TextLayout {
         let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, args.text, 1., true);
         builder.push_default(GenericFamily::SystemUi);
         builder.push_default(StyleProperty::FontSize(16.));
@@ -47,6 +48,11 @@ impl Renderer {
         let mut layout = builder.build(args.text);
         layout.break_all_lines(None);
         layout.align(Alignment::Start, AlignmentOptions::default());
+        Some(layout)
+    }
+
+    pub fn draw_text(&mut self, position:Vec2, layout:&TextLayout) {
+        let Some(layout) = layout else { return; };
         for line in layout.lines() {
             for item in line.items() {
                 match item {
@@ -56,7 +62,7 @@ impl Renderer {
                         self.scene.draw_glyphs(run.font())
                             .font_size(run.font_size())
                             .normalized_coords(coords)
-                            .transform(Affine::translate(args.position))
+                            .transform(Affine::translate(position))
                             .brush(glyph_run.style().brush)
                             .draw(Fill::NonZero, glyph_run.positioned_glyphs().map(|g| {
                                 vello::Glyph { id: g.id, x: g.x, y: g.y }
@@ -76,7 +82,7 @@ impl Renderer {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct ColorBrush(Color);
+pub struct ColorBrush(Color);
 
 impl Default for ColorBrush {
     fn default() -> Self {
@@ -92,10 +98,12 @@ impl From<ColorBrush> for vello::peniko::Brush<ImageBrush<&ImageData>, &Gradient
 
 pub trait Renderable {
     type NewArgs;
-    fn new(args:Self::NewArgs, state:&GameState) -> Self;
+    fn new(id:usize, args:Self::NewArgs, renderer:&mut Renderer, state:&GameState) -> Self;
 
-    fn update(&mut self, state:&GameState) {
-        let _ = state;
+    fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, input_state:&InputState) {
+        let _ =renderer;
+        let _ = game_state;
+        let _ = input_state;
     }
 
     fn draw(&self, renderer:&mut Renderer);

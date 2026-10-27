@@ -31,7 +31,7 @@ impl ApplicationHandler for AppHandler {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
         let mut game = pollster::block_on(Game::new(event_loop));
-        game::test_section(&mut game.state);
+        game::test_section(&mut game.state, &mut game.renderer);
         self.game = Some(game);
     }
 
@@ -41,15 +41,15 @@ impl ApplicationHandler for AppHandler {
             (WindowEvent::Resized(size), Some(game)) => game.window.resize(size),
             (WindowEvent::KeyboardInput { device_id:_ , event, is_synthetic:_ }, Some(game)) => {
                 match event.physical_key {
-                    PhysicalKey::Code(key) => input::keyboard_input(key, &mut game.state.logic_state),
+                    PhysicalKey::Code(key) => input::keyboard_input(key, &mut game.state.game_state),
                     _ => {}
                 }
             },
             (WindowEvent::CursorMoved { device_id:_, position }, Some(game)) => {
-                game.state.input_state.mouse_position = position;
+                game.state.input_state.user_state.mouse_position = position;
             },
             (WindowEvent::MouseInput { device_id:_, state, button }, Some(game)) => {
-                input::mouse_input(state, button, &mut game.state.input_state, &mut game.state.logic_state);
+                input::mouse_input(state, button, &mut game.state.input_state, &mut game.state.game_state);
             },
             (WindowEvent::RedrawRequested, Some(game)) => {
                 game.window.render(|| game.renderer.draw_scene(&game.state.render_state));
@@ -62,7 +62,7 @@ impl ApplicationHandler for AppHandler {
         let Some(game) = &mut self.game else { return; };
 
         if let Some(dt) = tick(&game.state.start_time, &mut game.state.previous_tick, &Duration::from_millis(50)) {
-            game.state.update(dt);
+            game.state.update(&mut game.renderer, dt);
         }
 
         if let Some(dt) = tick(&game.state.start_time, &mut game.state.render_state.previous_frame, &Duration::from_secs_f32(1./60.)) {

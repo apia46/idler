@@ -1,7 +1,8 @@
 use vello::kurbo::{Point, Size};
 
 use crate::game::GameState;
-use crate::input::button::Button as InputButton;
+use crate::input::button::{Button as InputButton, NewButtonArgs as NewInputButtonArgs};
+use crate::render::Renderer;
 use crate::render::{Renderable, button::{Button as RenderButton, NewButtonArgs as NewRenderButtonArgs}};
 use crate::state::State;
 
@@ -13,10 +14,12 @@ pub struct NewButtonArgs {
 }
 
 impl State {
-    pub fn new_button(&mut self, args:NewButtonArgs) {
+    pub fn new_button(&mut self, args:NewButtonArgs, renderer:&mut Renderer) {
         let NewButtonArgs { position, size, text, pressed } = args;
-        self.input_state.buttons.push(InputButton { position, size, pressed });
-        self.render_state.buttons.push(RenderButton::new(NewRenderButtonArgs { position, size, text }, &self.logic_state));
+        let count = &mut self.entities.buttons;
+        self.input_state.buttons.push(InputButton::new(*count, NewInputButtonArgs { position, size, pressed }));
+        self.render_state.buttons.push(RenderButton::new(*count, NewRenderButtonArgs { position, size, text }, renderer, &self.game_state));
+        *count += 1;
     }
 }
 

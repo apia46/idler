@@ -1,6 +1,6 @@
 use vello::kurbo::{Point, Size};
 
-use crate::{num::Number, state::{State, button::NewButtonArgs, label::NewLabelArgs}};
+use crate::{num::Number, render::Renderer, state::{State, button::NewButtonArgs, label::NewLabelArgs}};
 
 pub struct GameState {
     pub things: Number,
@@ -24,11 +24,11 @@ impl GameState {
     }
 }
 
-pub fn test_section(state:&mut State) {
+pub fn test_section(state:&mut State, renderer:&mut Renderer) {
     state.new_label(NewLabelArgs {
         position: Point::new(20., 20.),
         text: |s| format!("Things: {}\n(+{} x {}/s)", s.things, s.things_per_second, s.things_mult),
-    });
+    }, renderer);
     state.new_button(NewButtonArgs {
         position: Point::new(40., 120.),
         size: Size::new(160., 100.),
@@ -37,7 +37,7 @@ pub fn test_section(state:&mut State) {
             s.things_per_second += s.things;
             s.things = Number::ZERO;
         },
-    });
+    }, renderer);
     state.new_button(NewButtonArgs {
         position: Point::new(240., 120.),
         size: Size::new(200., 100.),
@@ -47,6 +47,6 @@ pub fn test_section(state:&mut State) {
             s.things_per_second = Number::ZERO;
             s.things = Number::ONE;
         },
-    });
+    }, renderer);
 }
 
