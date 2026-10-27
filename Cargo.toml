@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bytemuck = "1.25.2"
+educe = "0.8.1"
 env_logger = "0.11.11"
 futures = { version = "0.3.34", features = ["executor"] }
 log = "0.4.34"

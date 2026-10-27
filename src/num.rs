@@ -1,38 +1,125 @@
-#![expect(dead_code)]
-pub const BASE:f64 = f64::from_bits(0x5FF0000000000000); // 2^512
-pub const R_BASE:f64 = 1./BASE;
+use std::{f64::consts::LN_10, fmt::Display, ops::{Add, AddAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign}};
 
-// represents a number mantissa*BASE^exponent
-// 0 is stored as (0, 0)
-#[derive(Clone, Copy, Debug)]
-pub struct Number {
-    mantissa: f64, // (-2^512, -1] U [1, 2^512)
-    exponent: f64, // integer
-}
-
-pub const NAN:Number = Number { mantissa: f64::NAN, exponent: f64::NAN };
+const LN_INF:f64 = 709.78271289338399684324569237317280570931213758490138021957632972;
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub struct Number(f64);
 
 impl Number {
-    pub fn new(value:f64) -> Self {
-        const MIN_POS:f64 = f64::from_bits(1);
+    pub const ZERO:Number = Number(f64::NEG_INFINITY);
+    pub const ONE:Number = Number(0.);
 
-        let sign:f64 = value.signum();
-        let value = value.abs();
-        match value {
-            0.0 => Number { mantissa: 0.*sign, exponent: 0. },
-            MIN_POS..R_BASE => Number { mantissa: value*BASE*BASE*sign, exponent: -2. },
-            R_BASE..1.0 => Number { mantissa: value*BASE*sign, exponent: -1. },
-            1.0..BASE => Number { mantissa: value*sign, exponent: 0. },
-            BASE..f64::INFINITY => Number { mantissa: value/BASE*sign, exponent: 1. },
-            f64::INFINITY => Number { mantissa: f64::INFINITY*sign, exponent: f64::INFINITY },
-            _ => NAN,
-        }
+    pub fn new(value:f64) -> Self {
+        Number(value.ln())
+    }
+
+    fn add_lesser(self, Number(value):Self) -> Self {
+        if value == f64::NEG_INFINITY { self }
+        else { Number(self.0 + f64::ln(1.+f64::exp(value-self.0))) }
+    }
+
+    fn sub_lesser(self, Number(value):Self) -> Self {
+        if value == f64::NEG_INFINITY { self }
+        else { Number(self.0 + f64::ln(1.-f64::exp(value-self.0))) }
+    }
+
+    pub fn safe_ln(self) -> f64 {
+        self.0.max(0.)
     }
 }
 
 impl From<f64> for Number {
     fn from(value: f64) -> Self {
         Self::new(value)
+    }
+}
+
+impl From<i32> for Number {
+    fn from(value: i32) -> Self {
+        Self::new(value.into())
+    }
+}
+
+
+impl Mul for Number {
+    type Output = Number;
+    fn mul(self, rhs: Self) -> Self::Output {
+        Number(self.0+rhs.0)
+    }
+}
+
+impl MulAssign for Number {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs
+    }
+}
+
+impl Div for Number {
+    type Output = Number;
+    fn div(self, rhs: Self) -> Self::Output {
+        Number(self.0-rhs.0)
+    }
+}
+
+impl DivAssign for Number {
+    fn div_assign(&mut self, rhs: Self) {
+        *self = *self / rhs;
+    }
+}
+
+impl Add for Number {
+    type Output = Number;
+    fn add(self, rhs: Self) -> Self::Output {
+        if rhs > self { rhs.add_lesser(self) }
+        else { self.add_lesser(rhs) }
+    }
+}
+
+impl AddAssign for Number {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
+    }
+}
+
+
+impl Sub for Number {
+    type Output = Number;
+    fn sub(self, rhs: Self) -> Self::Output {
+        if rhs > self { rhs.sub_lesser(self) }
+        else { self.sub_lesser(rhs) }
+    }
+}
+
+impl SubAssign for Number {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs
+    }
+}
+
+
+impl BitXor for Number {
+    type Output = Number;
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        Number(self.0 * f64::exp(rhs.0))
+    }
+}
+
+impl BitXorAssign for Number {
+    fn bitxor_assign(&mut self, rhs: Self) {
+        *self = *self ^ rhs
+    }
+}
+
+impl Display for Number {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&if self.0 < LN_10*9. {
+            self.0.exp().to_string()
+        } else if self.0 < LN_INF {
+            let exponent = self.0 / LN_10;
+            let mantissa = 10_f64.powf(exponent.fract());
+            format!("{mantissa}e{}", exponent.floor())
+        } else {
+            format!("e{}", self.0 / LN_10)
+        })
     }
 }
 

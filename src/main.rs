@@ -2,11 +2,16 @@ use winit::{error::EventLoopError, event_loop::ActiveEventLoop};
 
 use crate::app::App;
 use crate::window::Window;
-use crate::renderer::{Renderer, RenderState};
+use crate::render::Renderer;
+use crate::state::State;
 
 mod app;
 mod window;
-mod renderer;
+
+mod render;
+mod input;
+
+mod state;
 
 pub mod num;
 pub mod num2;
@@ -15,15 +20,15 @@ pub mod num2;
 struct Game {
     window: Window,
     renderer: Renderer,
-    render_state: RenderState,
+    state: State,
 }
 
 impl Game {
     async fn new(event_loop:&ActiveEventLoop) -> Game {
         Game {
             window: Window::new(event_loop).await,
-            renderer: Renderer::new(),
-            render_state: RenderState::new(),
+            renderer: Renderer::default(),
+            state: State::default(),
         }
     }
 }

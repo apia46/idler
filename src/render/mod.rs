@@ -5,6 +5,7 @@ pub use state::RenderState;
 
 mod state;
 
+#[derive(Default)]
 pub struct Renderer {
     scene: Scene,
     font_cx: FontContext,
@@ -12,26 +13,14 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new() -> Self {
-        Renderer {
-            scene: Scene::new(),
-            font_cx: FontContext::new(),
-            layout_cx: LayoutContext::new(),
-        }
-    }
-
     pub fn draw_scene(&mut self, state:&mut RenderState) -> &Scene {
-        let current_frame = state.start_time.elapsed();
-        let delta = (current_frame - state.previous_frame).as_secs_f64();
-        state.things += state.things_per_second * delta.into();
-
         self.scene.reset();
-        let text = format!("things: {}\nthings per second: {}\nclick to convert things to things per second", state.things, state.things_per_second);
+        let text = &state.text;
         let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, &text, 1., true);
         builder.push_default(GenericFamily::SystemUi);
         builder.push_default(StyleProperty::FontSize(16.));
         builder.push_default(FontWeight::new(400.));
-        let color = AlphaColor::<Hsl>::new([(current_frame.as_millis() as f32 / 10.) % 360., 100., 50., 1.]).convert();
+        let color = AlphaColor::<Hsl>::new([(state.previous_frame.as_millis() as f32 / 10.) % 360., 100., 50., 1.]).convert();
         builder.push_default(StyleProperty::Brush(ColorBrush(color)));
         let mut layout = builder.build(&text);
         layout.break_all_lines(None);
@@ -61,7 +50,6 @@ impl Renderer {
                 }
             }
         }
-        state.previous_frame = current_frame;
         &self.scene
     }
 }
