@@ -1,6 +1,6 @@
 use vello::kurbo::{Point, Size};
 
-use crate::{game::GameState, render::{DrawTextArgs, DrawRectArgs, Renderer}};
+use crate::{game::GameState, render::{DrawRectArgs, DrawTextArgs, Renderable, Renderer}};
 
 pub struct Button {
     position: Point,
@@ -15,18 +15,19 @@ pub struct NewButtonArgs {
     pub text: fn(&GameState) -> String,
 }
 
-impl Button {
-    pub fn new(args:NewButtonArgs, state:&GameState) -> Self {
+impl Renderable for Button {
+    type NewArgs = NewButtonArgs;
+    fn new(args:NewButtonArgs, state:&GameState) -> Self {
         let NewButtonArgs { position, size, text:text_fn } = args;
         let text = (args.text)(state);
         Button { position, size, text_fn, text }
     }
 
-    pub fn update(&mut self, state:&GameState) {
+    fn update(&mut self, state:&GameState) {
         self.text = (self.text_fn)(state);
     }
 
-    pub fn draw(&self, renderer:&mut Renderer) {
+    fn draw(&self, renderer:&mut Renderer) {
         renderer.draw_rect(DrawRectArgs { rect: (self.position, self.size).into() });
         renderer.draw_text(DrawTextArgs { text: &self.text, position: self.position.to_vec2() })
     }

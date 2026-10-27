@@ -5,6 +5,7 @@ use educe::Educe;
 use crate::{input::InputState, game::GameState, render::RenderState};
 
 pub mod button;
+pub mod label;
 
 #[derive(Educe)]
 #[educe(Default)]

@@ -52,7 +52,7 @@ impl ApplicationHandler for AppHandler {
                 input::mouse_input(state, button, &mut game.state.input_state, &mut game.state.logic_state);
             },
             (WindowEvent::RedrawRequested, Some(game)) => {
-                game.window.render(|| game.renderer.draw_scene(&mut game.state.render_state));
+                game.window.render(|| game.renderer.draw_scene(&game.state.render_state));
             },
             _ => {},
         }

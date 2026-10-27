@@ -115,13 +115,13 @@ impl BitXorAssign for Number {
 impl Display for Number {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&if self.0 < LN_10*9. {
-            self.0.exp().to_string()
+            format!("{:.3}", self.0.exp())
         } else if self.0 < LN_INF {
             let exponent = self.0 / LN_10;
             let mantissa = 10_f64.powf(exponent.fract());
-            format!("{mantissa}e{}", exponent.floor())
+            format!("{mantissa:.3}e{}", exponent.floor())
         } else {
-            format!("e{}", self.0 / LN_10)
+            format!("e{:.3}", self.0 / LN_10)
         })
     }
 }

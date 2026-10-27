@@ -3,8 +3,11 @@ use vello::{Scene, kurbo::{Affine, Rect, Vec2}, peniko::{Color, Fill, Gradient, 
 
 pub use state::RenderState;
 
+use crate::game::GameState;
+
 mod state;
 pub mod button;
+pub mod label;
 
 #[derive(Default)]
 pub struct Renderer {
@@ -24,11 +27,9 @@ pub struct DrawTextArgs<'a> {
 }
 
 impl Renderer {
-    pub fn draw_scene(&mut self, state:&mut RenderState) -> &Scene {
+    pub fn draw_scene(&mut self, state:&RenderState) -> &Scene {
         self.scene.reset();
-        for button in &state.buttons {
-            button.draw(self);
-        }
+        state.draw(self);
         &self.scene
     }
 
@@ -87,5 +88,16 @@ impl From<ColorBrush> for vello::peniko::Brush<ImageBrush<&ImageData>, &Gradient
     fn from(ColorBrush(value): ColorBrush) -> Self {
         value.into()
     }
+}
+
+pub trait Renderable {
+    type NewArgs;
+    fn new(args:Self::NewArgs, state:&GameState) -> Self;
+
+    fn update(&mut self, state:&GameState) {
+        let _ = state;
+    }
+
+    fn draw(&self, renderer:&mut Renderer);
 }
 

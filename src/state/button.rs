@@ -1,6 +1,9 @@
 use vello::kurbo::{Point, Size};
 
-use crate::{input::button::Button as InputButton, game::GameState, render::button::{Button as RenderButton, NewButtonArgs as NewRenderButtonArgs}, state::State};
+use crate::game::GameState;
+use crate::input::button::Button as InputButton;
+use crate::render::{Renderable, button::{Button as RenderButton, NewButtonArgs as NewRenderButtonArgs}};
+use crate::state::State;
 
 pub struct NewButtonArgs {
     pub position: Point,
