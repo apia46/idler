@@ -1,9 +1,10 @@
 use parley::{Alignment, AlignmentOptions, FontContext, FontWeight, GenericFamily, LayoutContext, PositionedLayoutItem, StyleProperty};
-use vello::{Scene, kurbo::{Affine, Rect}, peniko::{Color, Fill, Gradient, ImageBrush, ImageData, color::{AlphaColor, Hsl, Srgb}}};
+use vello::{Scene, kurbo::{Affine, Rect, Vec2}, peniko::{Color, Fill, Gradient, ImageBrush, ImageData, color::{AlphaColor, Srgb}}};
 
 pub use state::RenderState;
 
 mod state;
+pub mod button;
 
 #[derive(Default)]
 pub struct Renderer {
@@ -12,17 +13,37 @@ pub struct Renderer {
     layout_cx: LayoutContext<ColorBrush>,
 }
 
+pub struct DrawRectArgs {
+    rect: Rect,
+}
+
+
+pub struct DrawTextArgs<'a> {
+    position: Vec2,
+    text: &'a str,
+}
+
 impl Renderer {
     pub fn draw_scene(&mut self, state:&mut RenderState) -> &Scene {
         self.scene.reset();
-        let text = &state.text;
-        let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, &text, 1., true);
+        for button in &state.buttons {
+            button.draw(self);
+        }
+        &self.scene
+    }
+
+    pub fn draw_rect(&mut self, args:DrawRectArgs) {
+        self.scene.fill(Fill::NonZero, Affine::default(), Color::BLACK, None, &args.rect);
+    }
+
+    pub fn draw_text(&mut self, args:DrawTextArgs) {
+        let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, args.text, 1., true);
         builder.push_default(GenericFamily::SystemUi);
         builder.push_default(StyleProperty::FontSize(16.));
         builder.push_default(FontWeight::new(400.));
-        let color = AlphaColor::<Hsl>::new([(state.previous_frame.as_millis() as f32 / 10.) % 360., 100., 50., 1.]).convert();
+        let color = Color::WHITE;
         builder.push_default(StyleProperty::Brush(ColorBrush(color)));
-        let mut layout = builder.build(&text);
+        let mut layout = builder.build(args.text);
         layout.break_all_lines(None);
         layout.align(Alignment::Start, AlignmentOptions::default());
         for line in layout.lines() {
@@ -34,7 +55,7 @@ impl Renderer {
                         self.scene.draw_glyphs(run.font())
                             .font_size(run.font_size())
                             .normalized_coords(coords)
-                            .transform(Affine::translate((40., 40.)))
+                            .transform(Affine::translate(args.position))
                             .brush(glyph_run.style().brush)
                             .draw(Fill::NonZero, glyph_run.positioned_glyphs().map(|g| {
                                 vello::Glyph { id: g.id, x: g.x, y: g.y }
@@ -50,7 +71,6 @@ impl Renderer {
                 }
             }
         }
-        &self.scene
     }
 }
 

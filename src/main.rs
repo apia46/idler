@@ -8,14 +8,12 @@ use crate::state::State;
 mod app;
 mod window;
 
-mod render;
-mod input;
-
 mod state;
 
+mod render;
+mod input;
 pub mod num;
-pub mod num2;
-
+mod game;
 
 struct Game {
     window: Window,

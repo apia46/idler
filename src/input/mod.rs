@@ -1,45 +1,30 @@
 use winit::{event::{ElementState, MouseButton}, keyboard::KeyCode};
 
-use crate::state::State;
 pub use state::InputState;
+use crate::game::GameState;
 
 mod state;
-mod button;
+pub mod button;
 
-pub fn mouse_input(button_state:ElementState, button:MouseButton, state:&mut State) {
+pub fn mouse_input(button_state:ElementState, button:MouseButton, input_state:&mut InputState, logic_state:&mut GameState) {
     if let ElementState::Released = button_state { return; };
     match button {
-        MouseButton::Left => lmb(state),
+        MouseButton::Left => lmb(input_state, logic_state),
         _ => {}
     }
 }
 
-pub fn keyboard_input(key:KeyCode, state:&mut State) {
+pub fn keyboard_input(key:KeyCode, _state:&mut GameState) {
     match key {
-        KeyCode::Space => space(state),
         _ => {}
     }
 }
 
-pub fn lmb(state:&mut State) {
-    for button in button::BUTTONS {
-        if button.hovered(&state.input_state) {
-            (button.pressed)(state);
+pub fn lmb(input_state:&mut InputState, logic_state:&mut GameState) {
+    for button in &input_state.buttons {
+        if button.hovered(&input_state) {
+            (button.pressed)(logic_state);
         }
     }
 }
-
-pub fn space(state:&mut State) {
-    state.things_mult += state.things_per_second.safe_ln().into();
-    state.things_per_second = 0.into();
-    state.things = 1.into();
-    state.update::<true>(0.);
-}
-
-pub fn this_button(state:&mut State) {
-    state.things_per_second += state.things;
-    state.things = 0.into();
-    state.update::<true>(0.);
-}
-
 
