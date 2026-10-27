@@ -1,6 +1,8 @@
-use vello::kurbo::Point;
+use vello::{kurbo::Point, peniko::Color};
 
 use crate::{game::GameState, input::InputState, render::{BuildTextArgs, Renderable, Renderer, TextLayout}};
+
+const TEXT_COLOR:Color = Color::WHITE;
 
 pub struct Label {
     #[expect(unused)]
@@ -20,12 +22,12 @@ impl Renderable for Label {
      fn new(id:usize, args:NewLabelArgs, renderer:&mut Renderer, state:&GameState) -> Self {
         let NewLabelArgs { position, text:text_fn } = args;
         let text = &(args.text)(state);
-        Label { id, position, text_fn, layout: renderer.build_text(BuildTextArgs { text }) }
+        Label { id, position, text_fn, layout: renderer.build_text(BuildTextArgs { text, color: TEXT_COLOR }) }
     }
 
     fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, _input_state:&InputState) {
         let text = &(self.text_fn)(game_state);
-        self.layout = renderer.build_text(BuildTextArgs { text });
+        self.layout = renderer.build_text(BuildTextArgs { text, color: TEXT_COLOR });
     }
 
     fn draw(&self, renderer:&mut Renderer) {

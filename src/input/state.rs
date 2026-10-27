@@ -1,6 +1,6 @@
 use winit::dpi::PhysicalPosition;
 
-use crate::input::button::Button;
+use crate::{game::GameState, input::button::Button};
 
 #[derive(Default)]
 pub struct UserState {
@@ -14,9 +14,9 @@ pub struct InputState {
 }
 
 impl InputState {
-    pub fn update(&mut self) {
+    pub fn update(&mut self, state:&GameState) {
         for button in &mut self.buttons {
-            button.update(&self.user_state);
+            button.update(&self.user_state, state);
         }
     }
 }

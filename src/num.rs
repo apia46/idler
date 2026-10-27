@@ -87,7 +87,7 @@ impl AddAssign for Number {
 impl Sub for Number {
     type Output = Number;
     fn sub(self, rhs: Self) -> Self::Output {
-        if rhs > self { rhs.sub_lesser(self) }
+        if rhs > self { Number::ZERO }
         else { self.sub_lesser(rhs) }
     }
 }
@@ -120,8 +120,12 @@ impl Display for Number {
             let exponent = self.0 / LN_10;
             let mantissa = 10_f64.powf(exponent.fract());
             format!("{mantissa:.3}e{}", exponent.floor())
-        } else {
+        } else if self.0 < LN_10*1e9 {
             format!("e{:.3}", self.0 / LN_10)
+        } else {
+            let exponent = self.0.log10();
+            let mantissa = 10_f64.powf(exponent.fract());
+            format!("e{mantissa:.3}e{}", exponent.floor())
         })
     }
 }

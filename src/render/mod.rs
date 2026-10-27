@@ -23,6 +23,7 @@ pub struct DrawRectArgs {
 
 pub struct BuildTextArgs<'a> {
     text: &'a str,
+    color: Color,
 }
 
 pub type TextLayout = Option<Layout<ColorBrush>>;
@@ -43,8 +44,7 @@ impl Renderer {
         builder.push_default(GenericFamily::SystemUi);
         builder.push_default(StyleProperty::FontSize(16.));
         builder.push_default(FontWeight::new(400.));
-        let color = Color::WHITE;
-        builder.push_default(StyleProperty::Brush(ColorBrush(color)));
+        builder.push_default(StyleProperty::Brush(ColorBrush(args.color)));
         let mut layout = builder.build(args.text);
         layout.break_all_lines(None);
         layout.align(Alignment::Start, AlignmentOptions::default());

@@ -10,14 +10,15 @@ pub struct NewButtonArgs {
     pub position: Point,
     pub size: Size,
     pub text: fn(&GameState) -> String,
+    pub enabled: fn(&GameState) -> bool,
     pub pressed: fn(&mut GameState),
 }
 
 impl State {
     pub fn new_button(&mut self, args:NewButtonArgs, renderer:&mut Renderer) {
-        let NewButtonArgs { position, size, text, pressed } = args;
+        let NewButtonArgs { position, size, text, enabled, pressed } = args;
         let count = &mut self.entities.buttons;
-        self.input_state.buttons.push(InputButton::new(*count, NewInputButtonArgs { position, size, pressed }));
+        self.input_state.buttons.push(InputButton::new(*count, NewInputButtonArgs { position, size, enabled, pressed }));
         self.render_state.buttons.push(RenderButton::new(*count, NewRenderButtonArgs { position, size, text }, renderer, &self.game_state));
         *count += 1;
     }

@@ -2,9 +2,12 @@ use vello::{kurbo::{Point, Size}, peniko::Color};
 
 use crate::{game::GameState, input::{InputState, button::InteractState}, render::{BuildTextArgs, DrawRectArgs, Renderable, Renderer, TextLayout}};
 
+const TEXT_COLOR:Color = Color::WHITE;
 const BG_COLOR:Color = Color::BLACK;
 const HOVERED_COLOR:Color = Color::from_rgb8(100, 100, 100);
 const PRESSED_COLOR:Color = Color::from_rgb8(50, 50, 50);
+const DISABLED_COLOR:Color = Color::from_rgb8(50, 50, 50);
+const DISABLED_TEXT_COLOR:Color = Color::from_rgb8(100, 100, 100);
 
 pub struct Button {
     id: usize,
@@ -28,19 +31,24 @@ impl Renderable for Button {
         let text = &(args.text)(state);
         Button {
             id, position, size, text_fn,
-            layout: renderer.build_text(BuildTextArgs { text }),
+            layout: renderer.build_text(BuildTextArgs { text, color: TEXT_COLOR }),
             bg_color: BG_COLOR,
         }
     }
 
     fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, input_state:&InputState) {
         let text = &(self.text_fn)(game_state);
-        self.bg_color = match input_state.buttons[self.id].state {
+        let interact_state = input_state.buttons[self.id].state;
+        self.bg_color = match interact_state {
             InteractState::None => BG_COLOR,
             InteractState::Hovered => HOVERED_COLOR,
             InteractState::Pressed => PRESSED_COLOR,
+            InteractState::Disabled => DISABLED_COLOR,
         };
-        self.layout = renderer.build_text(BuildTextArgs { text });
+        self.layout = renderer.build_text(BuildTextArgs {
+            text,
+            color: if let InteractState::Disabled = interact_state { DISABLED_TEXT_COLOR } else { TEXT_COLOR },
+        });
     }
 
     fn draw(&self, renderer:&mut Renderer) {
