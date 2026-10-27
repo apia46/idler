@@ -45,6 +45,9 @@ impl ApplicationHandler for AppHandler {
                     _ => {}
                 }
             },
+            (WindowEvent::CursorMoved { device_id:_, position }, Some(game)) => {
+                game.state.input_state.mouse_position = position;
+            },
             (WindowEvent::MouseInput { device_id:_, state, button }, Some(game)) => {
                 input::mouse_input(state, button, &mut game.state);
             },

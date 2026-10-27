@@ -1,6 +1,10 @@
 use winit::{event::{ElementState, MouseButton}, keyboard::KeyCode};
 
 use crate::state::State;
+pub use state::InputState;
+
+mod state;
+mod button;
 
 pub fn mouse_input(button_state:ElementState, button:MouseButton, state:&mut State) {
     if let ElementState::Released = button_state { return; };
@@ -18,9 +22,11 @@ pub fn keyboard_input(key:KeyCode, state:&mut State) {
 }
 
 pub fn lmb(state:&mut State) {
-    state.things_per_second += state.things;
-    state.things = 0.into();
-    state.update::<true>(0.);
+    for button in button::BUTTONS {
+        if button.hovered(&state.input_state) {
+            (button.pressed)(state);
+        }
+    }
 }
 
 pub fn space(state:&mut State) {
@@ -29,3 +35,11 @@ pub fn space(state:&mut State) {
     state.things = 1.into();
     state.update::<true>(0.);
 }
+
+pub fn this_button(state:&mut State) {
+    state.things_per_second += state.things;
+    state.things = 0.into();
+    state.update::<true>(0.);
+}
+
+

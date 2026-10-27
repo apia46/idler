@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use crate::{num::Number, render::RenderState};
+use crate::{input::InputState, num::Number, render::RenderState};
 
 pub struct State {
     pub start_time: Instant,
@@ -8,6 +8,7 @@ pub struct State {
     pub things: Number,
     pub things_per_second: Number,
     pub things_mult: Number,
+    pub input_state: InputState,
     pub render_state: RenderState,
 }
 
@@ -19,6 +20,7 @@ impl Default for State {
             things: 1.into(),
             things_per_second: 0.into(),
             things_mult: 1.into(),
+            input_state: InputState::default(),
             render_state: RenderState::default(),
         }
     }
