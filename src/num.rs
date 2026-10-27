@@ -1,6 +1,9 @@
 use std::{f64::consts::LN_10, fmt::Display, ops::{Add, AddAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign}};
 
 const LN_INF:f64 = 709.78271289338399684324569237317280570931213758490138021957632972;
+
+const LN_EPSILON:f64 = -36.; // less than 10^-15
+
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Number(f64);
 
@@ -13,12 +16,12 @@ impl Number {
     }
 
     fn add_lesser(self, Number(value):Self) -> Self {
-        if value == f64::NEG_INFINITY { self }
+        if value-self.0 < LN_EPSILON { self }
         else { Number(self.0 + f64::ln(1.+f64::exp(value-self.0))) }
     }
 
     fn sub_lesser(self, Number(value):Self) -> Self {
-        if value == f64::NEG_INFINITY { self }
+        if value-self.0 < LN_EPSILON { self }
         else { Number(self.0 + f64::ln(1.-f64::exp(value-self.0))) }
     }
 
@@ -28,13 +31,13 @@ impl Number {
 }
 
 impl From<f64> for Number {
-    fn from(value: f64) -> Self {
+    fn from(value:f64) -> Self {
         Self::new(value)
     }
 }
 
 impl From<i32> for Number {
-    fn from(value: i32) -> Self {
+    fn from(value:i32) -> Self {
         Self::new(value.into())
     }
 }
