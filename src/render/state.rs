@@ -37,7 +37,7 @@ macro_rules! render_state {
 
 render_state! {
     previous_frame: Duration,
-    delta_time: f64;
+    delta_time: Duration;
     buttons: Vec<Button>,
     labels: Vec<Label>,
 }

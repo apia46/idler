@@ -72,12 +72,12 @@ impl ApplicationHandler for AppHandler {
     }
 }
 
-fn tick(start:&Instant, previous:&mut Duration, length:&Duration) -> Option<f64> {
+fn tick(start:&Instant, previous:&mut Duration, length:&Duration) -> Option<Duration> {
     let current = start.elapsed();
     let delta_time = current - *previous;
     if delta_time >= *length {
         *previous = current;
-        Some(delta_time.as_secs_f64())
+        Some(delta_time)
     } else { None }
 }
 

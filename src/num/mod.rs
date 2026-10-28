@@ -8,7 +8,7 @@ const LN_E308:f64 = 709.78271289338399684324569237317280570931213758490138021957
 
 const LN_EPSILON:f64 = -36.; // less than 10^-15
 
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug)]
 pub struct Number(f64);
 
 impl Number {

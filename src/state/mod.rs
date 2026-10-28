@@ -26,8 +26,8 @@ pub struct Entities {
 }
 
 impl State {
-    pub fn update(&mut self,renderer:&mut Renderer, dt:f64) {
-        self.game_state.update(dt.into());
+    pub fn update(&mut self,renderer:&mut Renderer, dt:Duration) {
+        self.game_state.update(dt);
         self.input_state.update(&self.game_state);
         self.render_state.update(renderer, &self.game_state, &self.input_state);
     }

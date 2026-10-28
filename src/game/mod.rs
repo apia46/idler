@@ -1,28 +1,23 @@
+use std::time::Duration;
+
+use educe::Educe;
 use vello::kurbo::{Point, Size};
 
-use crate::{num::{AddBoost, MulBoost, PowBoost, Quantity}, render::Renderer, state::{State, button::NewButtonArgs, label::NewLabelArgs}};
+use crate::{num::{AddBoost, MulBoost, Number, PowBoost, Quantity}, render::Renderer, state::{State, button::NewButtonArgs, label::NewLabelArgs}};
 
+#[derive(Educe)]
+#[educe(Default)]
 pub struct GameState {
+    #[educe(Default=Quantity::ONE)]
     pub things: Quantity,
     pub things_per_second: AddBoost,
     pub things_mult: MulBoost,
     pub things_exp: PowBoost,
 }
 
-impl Default for GameState {
-    fn default() -> Self {
-        GameState {
-            things: Quantity::ONE,
-            things_per_second: Number::ZERO,
-            things_mult: Number::ONE,
-            things_exp: Number::ONE,
-        }
-    }
-}
-
 impl GameState {
-    pub fn update(&mut self, dt:Number) {
-        self.things += ((self.things_per_second * self.things_mult) ^ self.things_exp) * dt;
+    pub fn update(&mut self, dt:Duration) {
+        self.things += (self.things_per_second * self.things_mult ^ self.things_exp) * dt;
     }
 }
 
@@ -39,12 +34,12 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
         text: |s| format!("Convert things into\n+{}\nthings per second", s.things),
         enabled: |s| s.things > Number::ZERO,
         pressed: |s| {
-            s.things_per_second += s.things;
-            s.things = Number::ZERO;
+            s.things_per_second += s.things.to_number();
+            s.things = Quantity::ZERO;
         },
     }, renderer);
     state.new_button({
-        fn expr(s:&GameState) -> Number { s.things_per_second.ln() }
+        fn expr(s:&GameState) -> Number { s.things_per_second.to_number().ln() }
         NewButtonArgs {
             position: Point::new(240., 120.),
             size: Size::new(200., 100.),
@@ -52,13 +47,13 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
             enabled: |s| expr(s) > Number::ZERO,
             pressed: |s| {
                 s.things_mult += expr(s);
-                s.things_per_second = Number::ZERO;
-                s.things = Number::ONE;
+                s.things_per_second = AddBoost::ZERO;
+                s.things = Quantity::ONE;
             },
         }
     }, renderer);
     state.new_button({
-        fn expr(s:&GameState) -> Number { s.things_mult.ln().ln() - s.things_exp }
+        fn expr(s:&GameState) -> Number { s.things_mult.to_number().ln().ln() - s.things_exp.to_number() }
         NewButtonArgs {
             position: Point::new(40., 260.),
             size: Size::new(200., 100.),
@@ -66,9 +61,9 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
             enabled: |s| expr(s) > Number::ZERO,
             pressed: |s| {
                 s.things_exp += expr(s);
-                s.things_mult = Number::ONE;
-                s.things_per_second = Number::ZERO;
-                s.things = Number::ONE;
+                s.things_mult = MulBoost::ONE;
+                s.things_per_second = AddBoost::ZERO;
+                s.things = Quantity::ONE;
             },
         }
     }, renderer);
