@@ -26,10 +26,14 @@ pub struct Entities {
 }
 
 impl State {
-    pub fn update(&mut self,renderer:&mut Renderer, dt:Duration) {
+    pub fn update(&mut self, renderer:&mut Renderer, dt:Duration) {
         self.game_state.update(dt);
-        self.input_state.update(&self.game_state);
-        self.render_state.update(renderer, &self.game_state, &self.input_state);
+        self.input_state.update(&self.game_state, &self.render_state.camera);
+        renderer.update(&mut self.render_state, &self.game_state, &self.input_state);
+    }
+
+    pub fn process(&mut self, renderer:&mut Renderer, dt:Duration) {
+        renderer.process(&mut self.render_state, &self.input_state, dt);
     }
 }
 

@@ -3,7 +3,9 @@ use std::time::Duration;
 use educe::Educe;
 use vello::kurbo::{Point, Size};
 
-use crate::{num::{AddBoost, MulBoost, Number, PowBoost, Quantity}, render::Renderer, state::{State, button::NewButtonArgs, label::NewLabelArgs}};
+use crate::num::{AddBoost, MulBoost, Number, PowBoost, Quantity};
+use crate::render::Renderer;
+use crate::state::{State, button::NewButtonArgs, label::NewLabelArgs};
 
 #[derive(Educe)]
 #[educe(Default)]

@@ -1,8 +1,10 @@
-use vello::{AaConfig, Renderer, RendererOptions, Scene, util::{RenderContext, RenderSurface}};
+use vello::{AaConfig, Renderer, RendererOptions, Scene, kurbo::Vec2, util::{RenderContext, RenderSurface}};
 use wgpu::{CurrentSurfaceTexture, TextureViewDescriptor, wgt::CommandEncoderDescriptor};
-use winit::{dpi::PhysicalSize, event_loop::ActiveEventLoop};
+use winit::{dpi::{PhysicalPosition, PhysicalSize}, event_loop::ActiveEventLoop};
 use winit::window::Window as WinitWindow;
 use std::sync::Arc;
+
+use crate::render::camera::ScreenPoint;
 
 pub struct Window {
     window: Arc<WinitWindow>,
@@ -10,6 +12,7 @@ pub struct Window {
     surface: RenderSurface<'static>,
     renderer: Renderer,
     valid_surface: bool,
+    inv_scale_factor: f64,
 }
 
 impl Window {
@@ -20,8 +23,16 @@ impl Window {
         // this also creates the device
         let surface = render_context.create_surface(window.clone(), size.width, size.height, wgpu::PresentMode::AutoVsync).await.unwrap();
         let renderer = Renderer::new(&render_context.devices[surface.dev_id].device, RendererOptions::default()).unwrap();
+        let inv_scale_factor = 1./window.scale_factor();
+        Self { window, render_context, surface, renderer, valid_surface: true, inv_scale_factor }
+    }
 
-        Self { window, render_context, surface, renderer, valid_surface: true }
+    pub fn to_screen(&self, from:PhysicalPosition<f64>) -> ScreenPoint {
+        ScreenPoint::new((Vec2::new(from.x, from.y) * self.inv_scale_factor).to_point())
+    }
+
+    pub fn update_scale_factor(&mut self, to:f64) {
+        self.inv_scale_factor = 1./to;
     }
 
     pub fn request_redraw(&self) {

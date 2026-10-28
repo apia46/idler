@@ -2,7 +2,8 @@ use vello::kurbo::{Point, Rect, Size};
 use winit::event::{ElementState, MouseButton};
 
 use crate::game::GameState;
-use crate::input::state::UserState;
+use crate::input::UserState;
+use crate::render::camera::Camera;
 
 #[derive(Clone, Copy)]
 pub enum InteractState { Disabled, None, Hovered, Pressed }
@@ -33,22 +34,25 @@ impl Button {
         }
     }
 
-    fn hovered(&self, state:&UserState) -> bool {
-        Rect::from((self.position, self.size)).contains((state.mouse_position.x, state.mouse_position.y))
+    pub fn hovered(&self) -> bool {
+        match self.state {
+            InteractState::Hovered | InteractState::Pressed => true,
+            InteractState::None | InteractState::Disabled => false,
+        }
     }
 
-    pub fn update(&mut self, user_state:&UserState, game_state:&GameState) {
+    pub fn update(&mut self, user_state:&UserState, game_state:&GameState, camera:&Camera) {
         self.state = if !(self.enabled)(game_state) {
             InteractState::Disabled
         } else {
-            match (self.state, self.hovered(user_state)) {
+            match (self.state, Rect::from((self.position, self.size)).contains(camera.to_world(user_state.mouse_position))) {
                 (InteractState::None | InteractState::Disabled, true) => InteractState::Hovered,
                 (_, false) => InteractState::None,
                 (state, _) => state,
             }
         }
     }
-    
+
     pub fn mouse_input(&mut self, button_state:ElementState, mouse_button:MouseButton, game_state:&mut GameState) {
         if !matches!(mouse_button, MouseButton::Left) { return; };
         self.state = match (self.state, button_state) {

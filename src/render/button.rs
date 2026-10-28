@@ -1,6 +1,8 @@
 use vello::{kurbo::{Point, Size}, peniko::Color};
 
-use crate::{game::GameState, input::{InputState, button::InteractState}, render::{BuildTextArgs, DrawRectArgs, Renderable, Renderer, TextLayout}};
+use crate::game::GameState;
+use crate::input::{InputState, button::InteractState};
+use crate::render::{camera::Camera, BuildTextArgs, DrawRectArgs, Renderable, Renderer, TextLayout};
 
 const TEXT_COLOR:Color = Color::WHITE;
 const BG_COLOR:Color = Color::BLACK;
@@ -51,9 +53,9 @@ impl Renderable for Button {
         });
     }
 
-    fn draw(&self, renderer:&mut Renderer) {
-        renderer.draw_rect(DrawRectArgs { rect: (self.position, self.size).into(), color: self.bg_color });
-        renderer.draw_text(self.position.to_vec2(), &self.layout)
+    fn draw(&self, renderer:&mut Renderer, camera:&Camera) {
+        renderer.draw_rect(DrawRectArgs { rect: (self.position, self.size).into(), color: self.bg_color }, camera);
+        renderer.draw_text(self.position.to_vec2(), &self.layout, camera)
     }
 }
 

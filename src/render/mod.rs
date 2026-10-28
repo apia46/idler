@@ -1,11 +1,16 @@
+use std::time::Duration;
+
 use parley::{Layout, Alignment, AlignmentOptions, FontContext, FontWeight, GenericFamily, LayoutContext, PositionedLayoutItem, StyleProperty};
 use vello::{Scene, kurbo::{Affine, Rect, Vec2}, peniko::{Color, Fill, Gradient, ImageBrush, ImageData, color::{AlphaColor, Srgb}}};
 
 pub use state::RenderState;
 
-use crate::{game::GameState, input::InputState};
+use crate::game::GameState;
+use crate::render::camera::Camera;
+use crate::input::InputState;
 
 mod state;
+pub mod camera;
 pub mod button;
 pub mod label;
 
@@ -29,14 +34,22 @@ pub struct BuildTextArgs<'a> {
 pub type TextLayout = Option<Layout<ColorBrush>>;
 
 impl Renderer {
+    pub fn update(&mut self, render_state: &mut RenderState, game_state:&GameState, input_state:&InputState) {
+        render_state.update(self, game_state, input_state);
+    }
+
+    pub fn process(&mut self, render_state: &mut RenderState, input_state:&InputState, dt:Duration) {
+        render_state.camera.process(&input_state.user_state, dt);
+    }
+
     pub fn draw_scene(&mut self, state:&RenderState) -> &Scene {
         self.scene.reset();
         state.draw(self);
         &self.scene
     }
 
-    pub fn draw_rect(&mut self, args:DrawRectArgs) {
-        self.scene.fill(Fill::NonZero, Affine::default(), args.color, None, &args.rect);
+    pub fn draw_rect(&mut self, args:DrawRectArgs, camera:&Camera) {
+        self.scene.fill(Fill::NonZero, camera.transform_inv(), args.color, None, &args.rect);
     }
 
     pub fn build_text(&mut self, args:BuildTextArgs) -> TextLayout {
@@ -51,7 +64,7 @@ impl Renderer {
         Some(layout)
     }
 
-    pub fn draw_text(&mut self, position:Vec2, layout:&TextLayout) {
+    pub fn draw_text(&mut self, position:Vec2, layout:&TextLayout, camera:&Camera) {
         let Some(layout) = layout else { return; };
         for line in layout.lines() {
             for item in line.items() {
@@ -62,7 +75,7 @@ impl Renderer {
                         self.scene.draw_glyphs(run.font())
                             .font_size(run.font_size())
                             .normalized_coords(coords)
-                            .transform(Affine::translate(position))
+                            .transform(camera.transform_inv().pre_translate(position))
                             .brush(glyph_run.style().brush)
                             .draw(Fill::NonZero, glyph_run.positioned_glyphs().map(|g| {
                                 vello::Glyph { id: g.id, x: g.x, y: g.y }
@@ -106,6 +119,6 @@ pub trait Renderable {
         let _ = input_state;
     }
 
-    fn draw(&self, renderer:&mut Renderer);
+    fn draw(&self, renderer:&mut Renderer, camera:&Camera);
 }
 

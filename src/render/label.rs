@@ -1,6 +1,8 @@
 use vello::{kurbo::Point, peniko::Color};
 
-use crate::{game::GameState, input::InputState, render::{BuildTextArgs, Renderable, Renderer, TextLayout}};
+use crate::game::GameState;
+use crate::input::InputState;
+use crate::render::{camera::Camera, BuildTextArgs, Renderable, Renderer, TextLayout};
 
 const TEXT_COLOR:Color = Color::WHITE;
 
@@ -30,8 +32,8 @@ impl Renderable for Label {
         self.layout = renderer.build_text(BuildTextArgs { text, color: TEXT_COLOR });
     }
 
-    fn draw(&self, renderer:&mut Renderer) {
-        renderer.draw_text(self.position.to_vec2(), &self.layout);
+    fn draw(&self, renderer:&mut Renderer, camera:&Camera) {
+        renderer.draw_text(self.position.to_vec2(), &self.layout, camera);
     }
 }
 

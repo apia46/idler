@@ -5,6 +5,9 @@ use crate::window::Window;
 use crate::render::Renderer;
 use crate::state::State;
 
+mod util;
+mod num;
+
 mod app;
 mod window;
 
@@ -12,7 +15,6 @@ mod state;
 
 mod render;
 mod input;
-pub mod num;
 mod game;
 
 struct Game {

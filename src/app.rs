@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 
-use winit::{application::ApplicationHandler, error::EventLoopError, event::WindowEvent, event_loop::{ActiveEventLoop, EventLoop}, keyboard::PhysicalKey, window::WindowId};
+use vello::kurbo::Vec2;
+use winit::{application::ApplicationHandler, error::EventLoopError, event::{MouseScrollDelta, WindowEvent}, event_loop::{ActiveEventLoop, EventLoop}, window::WindowId};
 
 use crate::{Game, game};
 use crate::input;
@@ -39,17 +40,23 @@ impl ApplicationHandler for AppHandler {
         match (event, &mut self.game) {
             (WindowEvent::CloseRequested, _) => event_loop.exit(),
             (WindowEvent::Resized(size), Some(game)) => game.window.resize(size),
+            (WindowEvent::ScaleFactorChanged { scale_factor, inner_size_writer:_ }, Some(game)) => {
+                game.window.update_scale_factor(scale_factor);
+            },
             (WindowEvent::KeyboardInput { device_id:_ , event, is_synthetic:_ }, Some(game)) => {
-                match event.physical_key {
-                    PhysicalKey::Code(key) => input::keyboard_input(key, &mut game.state.game_state),
-                    _ => {}
-                }
+                input::keyboard_input(event, &mut game.state.input_state);
             },
             (WindowEvent::CursorMoved { device_id:_, position }, Some(game)) => {
-                game.state.input_state.user_state.mouse_position = position;
+                input::mouse_moved(game.window.to_screen(position), &mut game.state);
+            },
+            (WindowEvent::MouseWheel { device_id:_, delta, phase:_ }, Some(game)) => {
+                input::mouse_scroll(match delta {
+                    MouseScrollDelta::LineDelta(x, y) => Vec2::new(x as f64, y as f64) * 16.,
+                    MouseScrollDelta::PixelDelta(position) => Vec2::new(position.x, position.y),
+                }, &mut game.state);
             },
             (WindowEvent::MouseInput { device_id:_, state, button }, Some(game)) => {
-                input::mouse_input(state, button, &mut game.state.input_state, &mut game.state.game_state);
+                input::mouse_input(state, button, &mut game.state);
             },
             (WindowEvent::RedrawRequested, Some(game)) => {
                 game.window.render(|| game.renderer.draw_scene(&game.state.render_state));
@@ -65,8 +72,9 @@ impl ApplicationHandler for AppHandler {
             game.state.update(&mut game.renderer, dt);
         }
 
-        if let Some(dt) = tick(&game.state.start_time, &mut game.state.render_state.previous_frame, &Duration::from_secs_f32(1./60.)) {
-            game.state.render_state.delta_time = dt;
+        if let Some(dt) = tick(&game.state.start_time, &mut game.state.render_state.renderer_state.previous_frame, &Duration::from_secs_f32(1./60.)) {
+            game.state.render_state.renderer_state.delta_time = dt;
+            game.state.process(&mut game.renderer, dt);
             game.window.request_redraw();
         }
     }
