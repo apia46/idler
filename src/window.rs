@@ -2,7 +2,7 @@ use vello::{AaConfig, Renderer, RendererOptions, Scene, kurbo::Vec2, util::{Rend
 use wgpu::{CurrentSurfaceTexture, TextureViewDescriptor, wgt::CommandEncoderDescriptor};
 use winit::{dpi::{PhysicalPosition, PhysicalSize}, event_loop::ActiveEventLoop};
 use winit::window::Window as WinitWindow;
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use crate::render::camera::ScreenPoint;
 
@@ -37,6 +37,11 @@ impl Window {
 
     pub fn request_redraw(&self) {
         self.window.request_redraw();
+    }
+
+    pub fn get_refresh_rate(&self) -> Option<Duration> {
+        self.window.current_monitor().and_then(|m| m.refresh_rate_millihertz())
+            .map(|t| Duration::from_secs_f64(1000. / t as f64))
     }
 
 

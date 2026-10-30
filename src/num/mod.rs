@@ -21,12 +21,12 @@ impl Number {
 
     fn add_lesser(self, Number(value):Self) -> Self {
         if value-self.0 < LN_EPSILON { self }
-        else { Number(self.0 + f64::ln(1.+f64::exp(value-self.0))) }
+        else { Number(self.0 + f64::ln_1p(f64::exp(value-self.0))) }
     }
 
     fn sub_lesser(self, Number(value):Self) -> Self {
         if value-self.0 < LN_EPSILON { self }
-        else { Number(self.0 + f64::ln(1.-f64::exp(value-self.0))) }
+        else { Number(self.0 + f64::ln_1p(-f64::exp(value-self.0))) }
     }
 
     pub fn ln(self) -> Self {

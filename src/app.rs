@@ -38,13 +38,17 @@ impl ApplicationHandler for AppHandler {
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
         match (event, &mut self.game) {
+            (WindowEvent::Focused(true), Some(game)) if let Some(refresh_rate) = game.window.get_refresh_rate() => {
+                // i cant figure out a better place to put this
+                game.state.render_state.renderer_state.refresh_rate = refresh_rate;
+            },
             (WindowEvent::CloseRequested, _) => event_loop.exit(),
             (WindowEvent::Resized(size), Some(game)) => game.window.resize(size),
             (WindowEvent::ScaleFactorChanged { scale_factor, inner_size_writer:_ }, Some(game)) => {
                 game.window.update_scale_factor(scale_factor);
             },
             (WindowEvent::KeyboardInput { device_id:_ , event, is_synthetic:_ }, Some(game)) => {
-                input::keyboard_input(event, &mut game.state.input_state);
+                input::keyboard_input(event, &mut game.state);
             },
             (WindowEvent::CursorMoved { device_id:_, position }, Some(game)) => {
                 input::mouse_moved(game.window.to_screen(position), &mut game.state);
@@ -72,7 +76,8 @@ impl ApplicationHandler for AppHandler {
             game.state.update(&mut game.renderer, dt);
         }
 
-        if let Some(dt) = tick(&game.state.start_time, &mut game.state.render_state.renderer_state.previous_frame, &Duration::from_secs_f32(1./60.)) {
+        let renderer_state = &mut game.state.render_state.renderer_state;
+        if let Some(dt) = tick(&game.state.start_time, &mut renderer_state.previous_frame, &renderer_state.refresh_rate) {
             game.state.render_state.renderer_state.delta_time = dt;
             game.state.process(&mut game.renderer, dt);
             game.window.request_redraw();

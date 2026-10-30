@@ -59,17 +59,36 @@ pub fn mouse_scroll(amount:Vec2, state:&mut State) {
     state.render_state.camera.scroll_input(amount.y, state.input_state.user_state.mouse_position);
 }
 
-pub fn keyboard_input(event:KeyEvent, state:&mut InputState) {
+pub fn keyboard_input(event:KeyEvent, state:&mut State) {
     let KeyEvent { physical_key:PhysicalKey::Code(key), state:key_state, .. } = event else { return; };
-    let held_keys = &mut state.user_state.held_keys;
+    let held_keys = &mut state.input_state.user_state.held_keys;
     match key_state {
         ElementState::Pressed => {
             held_keys.insert(key);
+            match key {
+                KeyCode::KeyH => {
+                    state.render_state.camera.home();
+                },
+                _ => {}
+            }
         },
         ElementState::Released => {
             held_keys.remove(&key);
         }
     }
 
+}
+
+impl UserState {
+    pub fn keyboard_input_direction(&self) -> Vec2 {
+        let mut result = Vec2::ZERO;
+        for (key, direction) in [
+            (KeyCode::KeyW, Vec2::new(0., -1.)), (KeyCode::KeyA, Vec2::new(-1., 0.)),
+            (KeyCode::KeyS, Vec2::new(0., 1.)), (KeyCode::KeyD, Vec2::new(1., 0.)),
+        ] {
+            result += self.held_keys.get(&key).and(Some(direction)).unwrap_or_default();
+        }
+        result
+    }
 }
 

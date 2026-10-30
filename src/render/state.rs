@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use educe::Educe;
+
 use crate::game::GameState;
 use crate::input::InputState;
 use crate::render::{camera::Camera, Renderable, Renderer, button::Button, label::Label};
@@ -35,10 +37,13 @@ macro_rules! render_state {
     }
 }
 
-#[derive(Default)]
+#[derive(Educe)]
+#[educe(Default)]
 pub struct RendererState {
     pub previous_frame: Duration,
     pub delta_time: Duration,
+    #[educe(Default=Duration::from_secs_f64(1./60.))]
+    pub refresh_rate: Duration,
 }
 
 render_state! {
