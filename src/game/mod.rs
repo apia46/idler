@@ -10,7 +10,7 @@ use crate::state::{State, button::NewButtonArgs, label::NewLabelArgs};
 #[derive(Educe)]
 #[educe(Default)]
 pub struct GameState {
-    #[educe(Default=Quantity::ONE)]
+    #[educe(Default=1)]
     pub things: Quantity,
     pub things_per_second: AddBoost,
     pub things_mult: MulBoost,
@@ -34,7 +34,7 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
         position: Point::new(40., 120.),
         size: Size::new(160., 100.),
         text: |s| format!("Convert things into\n+{}\nthings per second", s.things),
-        enabled: |s| s.things > Number::ZERO,
+        enabled: |s| s.things > 0,
         pressed: |s| {
             s.things_per_second += s.things.to_number();
             s.things = Quantity::ZERO;
@@ -46,7 +46,7 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
             position: Point::new(240., 120.),
             size: Size::new(200., 100.),
             text: |s| format!("Reset things and convert\nthings per second into\n+{}\nthings mult", expr(s)),
-            enabled: |s| expr(s) > Number::ZERO,
+            enabled: |s| expr(s) > 0,
             pressed: |s| {
                 s.things_mult += expr(s);
                 s.things_per_second = AddBoost::ZERO;
@@ -60,7 +60,7 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
             position: Point::new(40., 260.),
             size: Size::new(200., 100.),
             text: |s| format!("Reset things and\nthings per second and\nconvert things mult into\n+{}\nthings exponent", expr(s)),
-            enabled: |s| expr(s) > Number::ZERO,
+            enabled: |s| expr(s) > 0,
             pressed: |s| {
                 s.things_exp += expr(s);
                 s.things_mult = MulBoost::ONE;

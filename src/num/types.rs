@@ -41,10 +41,7 @@ macro_rules! comparison {
     };
     ($lhs:ty, $rhs:ty, |$a:ident| $a_expr:expr, |$b:ident| $b_expr:expr) => {
         comparison!(singular, $lhs, $rhs, |$a| $a_expr, |$b| $b_expr);
-        comparison!(singular, $lhs, &$rhs, |$a| $a_expr, |$b| $b_expr);
-        comparison!(singular, &$lhs, $rhs, |$a| $a_expr, |$b| $b_expr);
-        comparison!(singular, $lhs, &mut $rhs, |$a| $a_expr, |$b| $b_expr);
-        comparison!(singular, &mut $lhs, $rhs, |$a| $a_expr, |$b| $b_expr);
+
     };
     (Number, $rhs:ty) => {
         comparison!(Number, $rhs, |a| a, |b| &b.0);
@@ -58,6 +55,8 @@ macro_rules! comparison {
 }
 
 comparison!(Number, Number, |a| a.0, |b| &b.0);
+comparison!(Number, f64, |a| a, |b| &Number::from(*b));
+comparison!(Number, i32, |a| a, |b| &Number::from(*b));
 
 macro_rules! symm_comparison {
     (Number, $rhs:ty) => {
@@ -80,6 +79,8 @@ macro_rules! num_type {
         pub struct $ty(Number);
 
         symm_comparison!($ty, Number);
+        comparison!($ty, f64, |a| a, |b| &Number::from(*b));
+        comparison!($ty, i32, |a| a, |b| &Number::from(f64::from(*b)));
 
         impl Display for $ty {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -87,13 +88,28 @@ macro_rules! num_type {
             }
         }
 
+        impl From<f64> for $ty {
+            fn from(value:f64) -> Self {
+                Self(Number::new(value))
+            }
+        }
+
+        impl From<i32> for $ty {
+            fn from(value:i32) -> Self {
+                Self(Number::new(value.into()))
+            }
+        }
+
         impl $ty {
+            #[allow(unused)]
             pub const ONE:$ty = $ty(Number::ONE);
 
+            #[allow(unused)]
             pub fn to_number(self) -> Number {
                 self.0
             }
 
+            #[allow(unused)]
             pub fn as_number(&mut self) -> &mut Number {
                 &mut self.0
             }
