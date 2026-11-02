@@ -7,6 +7,7 @@ use crate::state::State;
 
 mod util;
 mod num;
+mod grid;
 
 mod app;
 mod window;

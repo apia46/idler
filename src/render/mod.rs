@@ -1,11 +1,11 @@
 use std::time::Duration;
 
 use parley::{Layout, Alignment, AlignmentOptions, FontContext, FontWeight, GenericFamily, LayoutContext, PositionedLayoutItem, StyleProperty};
-use vello::{Scene, kurbo::{Affine, Rect, Vec2}, peniko::{Color, Fill, Gradient, ImageBrush, ImageData, color::{AlphaColor, Srgb}}};
+use vello::{Scene, kurbo::{Affine, Rect, Stroke, Vec2}, peniko::{Color, Fill, Gradient, ImageBrush, ImageData, color::{AlphaColor, Srgb}}};
 
 pub use state::RenderState;
 
-use crate::game::GameState;
+use crate::{game::GameState, grid::GridPoint};
 use crate::render::camera::Camera;
 use crate::input::InputState;
 
@@ -26,6 +26,11 @@ pub struct DrawRectArgs {
     color: Color,
 }
 
+pub struct DrawHexagonArgs {
+    point: GridPoint,
+    color: Color,
+}
+
 pub struct BuildTextArgs<'a> {
     text: &'a str,
     color: Color,
@@ -36,6 +41,7 @@ pub type TextLayout = Option<Layout<ColorBrush>>;
 impl Renderer {
     pub fn update(&mut self, render_state: &mut RenderState, game_state:&GameState, input_state:&InputState) {
         render_state.update(self, game_state, input_state);
+        render_state.mouse_position = input_state.user_state.mouse_position;
     }
 
     pub fn process(&mut self, render_state: &mut RenderState, input_state:&InputState, dt:Duration) {
@@ -45,11 +51,17 @@ impl Renderer {
     pub fn draw_scene(&mut self, state:&RenderState) -> &Scene {
         self.scene.reset();
         state.draw(self);
+        let point = GridPoint::nearest_to(state.camera.to_world(state.mouse_position)).into();
+        self.draw_hexagon(DrawHexagonArgs { point, color: Color::WHITE }, &state.camera);
         &self.scene
     }
 
     pub fn draw_rect(&mut self, args:DrawRectArgs, camera:&Camera) {
         self.scene.fill(Fill::NonZero, camera.transform_inv(), args.color, None, &args.rect);
+    }
+
+    pub fn draw_hexagon(&mut self, args:DrawHexagonArgs, camera:&Camera) {
+        self.scene.stroke(&Stroke::new(4.), camera.transform_inv(), args.color, None, &args.point.to_hexagon());
     }
 
     pub fn build_text(&mut self, args:BuildTextArgs) -> TextLayout {
