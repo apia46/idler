@@ -43,7 +43,7 @@ pub fn mouse_moved(to:ScreenPoint, state:&mut State) {
 pub fn mouse_input(button_state:ElementState, mouse_button:MouseButton, state:&mut State) {
     let mut anything_hovered:bool = false;
     for button in &mut state.input_state.buttons {
-        button.mouse_input(button_state, mouse_button, &mut state.game_state);
+        button.mouse_input(button_state, mouse_button, &state.input_state.user_state, &state.render_state.camera, &mut state.game_state);
         anything_hovered |= button.hovered();
     }
     let user_state = &mut state.input_state.user_state;

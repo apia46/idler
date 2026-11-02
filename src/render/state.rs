@@ -4,7 +4,7 @@ use educe::Educe;
 
 use crate::game::GameState;
 use crate::input::InputState;
-use crate::render::{camera::{Camera, ScreenPoint}, Renderable, Renderer, button::Button, label::Label};
+use crate::render::{camera::Camera, Renderable, Renderer, button::Button, label::Label};
 
 macro_rules! render_state {
     {
@@ -14,7 +14,6 @@ macro_rules! render_state {
         pub struct RenderState {
             pub renderer_state: RendererState,
             pub camera: Camera,
-            pub mouse_position: ScreenPoint,
             $(pub $names: $types,)*
         }
 

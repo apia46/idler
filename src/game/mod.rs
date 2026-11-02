@@ -1,8 +1,9 @@
 use std::time::Duration;
 
 use educe::Educe;
-use vello::kurbo::{Point, Size};
+use vello::kurbo::Point;
 
+use crate::grid::GridPoint;
 use crate::num::{AddBoost, MulBoost, Number, PowBoost, Quantity};
 use crate::render::Renderer;
 use crate::state::{State, button::NewButtonArgs, label::NewLabelArgs};
@@ -31,8 +32,7 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
         ),
     }, renderer);
     state.new_button(NewButtonArgs {
-        position: Point::new(40., 120.),
-        size: Size::new(160., 100.),
+        position: GridPoint::new(1, 1),
         text: |s| format!("Convert things into\n+{}\nthings per second", s.things),
         enabled: |s| s.things > 0,
         pressed: |s| {
@@ -43,8 +43,7 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
     state.new_button({
         fn expr(s:&GameState) -> Number { s.things_per_second.to_number().ln() }
         NewButtonArgs {
-            position: Point::new(240., 120.),
-            size: Size::new(200., 100.),
+            position: GridPoint::new(3, 1),
             text: |s| format!("Reset things and convert\nthings per second into\n+{}\nthings mult", expr(s)),
             enabled: |s| expr(s) > 0,
             pressed: |s| {
@@ -57,8 +56,7 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
     state.new_button({
         fn expr(s:&GameState) -> Number { s.things_mult.to_number().ln().ln() - s.things_exp.to_number() }
         NewButtonArgs {
-            position: Point::new(40., 260.),
-            size: Size::new(200., 100.),
+            position: GridPoint::new(1, 3),
             text: |s| format!("Reset things and\nthings per second and\nconvert things mult into\n+{}\nthings exponent", expr(s)),
             enabled: |s| expr(s) > 0,
             pressed: |s| {

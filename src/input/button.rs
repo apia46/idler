@@ -1,7 +1,7 @@
-use vello::kurbo::{Point, Rect, Size};
 use winit::event::{ElementState, MouseButton};
 
 use crate::game::GameState;
+use crate::grid::GridPoint;
 use crate::input::UserState;
 use crate::render::camera::Camera;
 
@@ -11,25 +11,23 @@ pub enum InteractState { Disabled, None, Hovered, Pressed }
 pub struct Button {
     #[expect(unused)]
     id: usize,
-    position: Point,
-    size: Size,
+    position: GridPoint,
     enabled: fn(&GameState) -> bool,
     pressed: fn(&mut GameState),
     pub state: InteractState,
 }
 
 pub struct NewButtonArgs {
-    pub position: Point,
-    pub size: Size,
+    pub position: GridPoint,
     pub enabled: fn(&GameState) -> bool,
     pub pressed: fn(&mut GameState),
 }
 
 impl Button {
     pub fn new(id: usize, args: NewButtonArgs) -> Self {
-        let NewButtonArgs { position, size, pressed, enabled } = args;
+        let NewButtonArgs { position, pressed, enabled } = args;
         Self {
-            id, position, size, enabled, pressed,
+            id, position, enabled, pressed,
             state: InteractState::None,
         }
     }
@@ -45,7 +43,7 @@ impl Button {
         self.state = if !(self.enabled)(game_state) {
             InteractState::Disabled
         } else {
-            match (self.state, Rect::from((self.position, self.size)).contains(camera.to_world(user_state.mouse_position))) {
+            match (self.state, GridPoint::nearest(camera.to_world(user_state.mouse_position)) == self.position) {
                 (InteractState::None | InteractState::Disabled, true) => InteractState::Hovered,
                 (_, false) => InteractState::None,
                 (state, _) => state,
@@ -53,15 +51,18 @@ impl Button {
         }
     }
 
-    pub fn mouse_input(&mut self, button_state:ElementState, mouse_button:MouseButton, game_state:&mut GameState) {
+    pub fn mouse_input(&mut self, button_state:ElementState, mouse_button:MouseButton,
+        user_state:&UserState, camera:&Camera, game_state:&mut GameState
+    ) {
         if !matches!(mouse_button, MouseButton::Left) { return; };
-        self.state = match (self.state, button_state) {
-            (InteractState::Hovered, ElementState::Pressed) => InteractState::Pressed,
+        match (self.state, button_state) {
+            (InteractState::Hovered, ElementState::Pressed) => self.state = InteractState::Pressed,
             (InteractState::Pressed, ElementState::Released) => {
                 (self.pressed)(game_state);
-                InteractState::None
+                self.state = InteractState::None;
+                self.update(user_state, game_state, camera);
             },
-            (state, _) => state,
+            _ => {},
         }
     }
 }

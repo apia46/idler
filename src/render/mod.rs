@@ -1,110 +1,20 @@
 use std::time::Duration;
 
-use parley::{Layout, Alignment, AlignmentOptions, FontContext, FontWeight, GenericFamily, LayoutContext, PositionedLayoutItem, StyleProperty};
-use vello::{Scene, kurbo::{Affine, Rect, Stroke, Vec2}, peniko::{Color, Fill, Gradient, ImageBrush, ImageData, color::{AlphaColor, Srgb}}};
+use parley::{FontContext, LayoutContext};
+use vello::{Scene, peniko::{Color, Gradient, ImageBrush, ImageData}};
 
-pub use state::RenderState;
-
-use crate::{game::GameState, grid::GridPoint};
+use crate::game::GameState;
 use crate::render::camera::Camera;
 use crate::input::InputState;
 
 mod state;
+mod draw;
 pub mod camera;
+
 pub mod button;
 pub mod label;
 
-#[derive(Default)]
-pub struct Renderer {
-    scene: Scene,
-    font_cx: FontContext,
-    layout_cx: LayoutContext<ColorBrush>,
-}
-
-pub struct DrawRectArgs {
-    rect: Rect,
-    color: Color,
-}
-
-pub struct DrawHexagonArgs {
-    point: GridPoint,
-    color: Color,
-}
-
-pub struct BuildTextArgs<'a> {
-    text: &'a str,
-    color: Color,
-}
-
-pub type TextLayout = Option<Layout<ColorBrush>>;
-
-impl Renderer {
-    pub fn update(&mut self, render_state: &mut RenderState, game_state:&GameState, input_state:&InputState) {
-        render_state.update(self, game_state, input_state);
-        render_state.mouse_position = input_state.user_state.mouse_position;
-    }
-
-    pub fn process(&mut self, render_state: &mut RenderState, input_state:&InputState, dt:Duration) {
-        render_state.camera.process(&input_state.user_state, dt);
-    }
-
-    pub fn draw_scene(&mut self, state:&RenderState) -> &Scene {
-        self.scene.reset();
-        state.draw(self);
-        let point = GridPoint::nearest_to(state.camera.to_world(state.mouse_position)).into();
-        self.draw_hexagon(DrawHexagonArgs { point, color: Color::WHITE }, &state.camera);
-        &self.scene
-    }
-
-    pub fn draw_rect(&mut self, args:DrawRectArgs, camera:&Camera) {
-        self.scene.fill(Fill::NonZero, camera.transform_inv(), args.color, None, &args.rect);
-    }
-
-    pub fn draw_hexagon(&mut self, args:DrawHexagonArgs, camera:&Camera) {
-        self.scene.stroke(&Stroke::new(4.), camera.transform_inv(), args.color, None, &args.point.to_hexagon());
-    }
-
-    pub fn build_text(&mut self, args:BuildTextArgs) -> TextLayout {
-        let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, args.text, 1., true);
-        builder.push_default(GenericFamily::SystemUi);
-        builder.push_default(StyleProperty::FontSize(16.));
-        builder.push_default(FontWeight::new(400.));
-        builder.push_default(StyleProperty::Brush(ColorBrush(args.color)));
-        let mut layout = builder.build(args.text);
-        layout.break_all_lines(None);
-        layout.align(Alignment::Start, AlignmentOptions::default());
-        Some(layout)
-    }
-
-    pub fn draw_text(&mut self, position:Vec2, layout:&TextLayout, camera:&Camera) {
-        let Some(layout) = layout else { return; };
-        for line in layout.lines() {
-            for item in line.items() {
-                match item {
-                    PositionedLayoutItem::GlyphRun(glyph_run) => {
-                        let run = glyph_run.run();
-                        let coords = bytemuck::cast_slice::<_, i16>(run.normalized_coords());
-                        self.scene.draw_glyphs(run.font())
-                            .font_size(run.font_size())
-                            .normalized_coords(coords)
-                            .transform(camera.transform_inv().pre_translate(position))
-                            .brush(glyph_run.style().brush)
-                            .draw(Fill::NonZero, glyph_run.positioned_glyphs().map(|g| {
-                                vello::Glyph { id: g.id, x: g.x, y: g.y }
-                            }));
-                    },
-                    PositionedLayoutItem::InlineBox(inline_box) => {
-                        let (x0, y0) = (inline_box.x as f64, inline_box.y as f64);
-                        let (x1, y1) = (x0 + inline_box.width as f64, y0 + inline_box.height as f64);
-                        self.scene.fill(Fill::EvenOdd, Affine::default(), AlphaColor::<Srgb>::BLACK, None, &Rect {
-                            x0, y0, x1, y1
-                        });
-                    },
-                }
-            }
-        }
-    }
-}
+pub use state::RenderState;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ColorBrush(Color);
@@ -118,6 +28,29 @@ impl Default for ColorBrush {
 impl From<ColorBrush> for vello::peniko::Brush<ImageBrush<&ImageData>, &Gradient> {
     fn from(ColorBrush(value): ColorBrush) -> Self {
         value.into()
+    }
+}
+
+#[derive(Default)]
+pub struct Renderer {
+    scene: Scene,
+    font_cx: FontContext,
+    layout_cx: LayoutContext<ColorBrush>,
+}
+
+impl Renderer {
+    pub fn update(&mut self, render_state: &mut RenderState, game_state:&GameState, input_state:&InputState) {
+        render_state.update(self, game_state, input_state);
+    }
+
+    pub fn process(&mut self, render_state: &mut RenderState, input_state:&InputState, dt:Duration) {
+        render_state.camera.process(&input_state.user_state, dt);
+    }
+
+    pub fn draw_scene(&mut self, state:&RenderState) -> &Scene {
+        self.scene.reset();
+        state.draw(self);
+        &self.scene
     }
 }
 

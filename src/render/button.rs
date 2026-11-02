@@ -1,9 +1,12 @@
-use vello::{kurbo::{Point, Size}, peniko::Color};
+use vello::peniko::Color;
 
 use crate::game::GameState;
+use crate::grid::GridPoint;
 use crate::input::{InputState, button::InteractState};
-use crate::render::{camera::Camera, BuildTextArgs, DrawRectArgs, Renderable, Renderer, TextLayout};
+use crate::render::draw::{DrawHexagonArgs, Style};
+use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer};
 
+const FONT_SIZE:f32 = 12.;
 const TEXT_COLOR:Color = Color::WHITE;
 const BG_COLOR:Color = Color::BLACK;
 const HOVERED_COLOR:Color = Color::from_rgb8(100, 100, 100);
@@ -13,27 +16,33 @@ const DISABLED_TEXT_COLOR:Color = Color::from_rgb8(100, 100, 100);
 
 pub struct Button {
     id: usize,
-    position: Point,
-    size: Size,
+    position: GridPoint,
     text_fn: fn(&GameState) -> String,
     layout: TextLayout,
     bg_color: Color,
 }
 
 pub struct NewButtonArgs {
-    pub position: Point,
-    pub size: Size,
+    pub position: GridPoint,
     pub text: fn(&GameState) -> String,
+}
+
+fn build_text(renderer:&mut Renderer, text:&str, state:InteractState) -> TextLayout {
+    renderer.build_text(BuildTextArgs {
+        text, font_size: FONT_SIZE,
+        color: if let InteractState::Disabled = state { DISABLED_TEXT_COLOR } else { TEXT_COLOR },
+        center: true,
+    })
 }
 
 impl Renderable for Button {
     type NewArgs = NewButtonArgs;
     fn new(id:usize, args:NewButtonArgs, renderer:&mut Renderer, state:&GameState) -> Self {
-        let NewButtonArgs { position, size, text:text_fn } = args;
+        let NewButtonArgs { position, text:text_fn } = args;
         let text = &(args.text)(state);
         Button {
-            id, position, size, text_fn,
-            layout: renderer.build_text(BuildTextArgs { text, color: TEXT_COLOR }),
+            id, position, text_fn,
+            layout: build_text(renderer, text, InteractState::None),
             bg_color: BG_COLOR,
         }
     }
@@ -47,15 +56,13 @@ impl Renderable for Button {
             InteractState::Pressed => PRESSED_COLOR,
             InteractState::Disabled => DISABLED_COLOR,
         };
-        self.layout = renderer.build_text(BuildTextArgs {
-            text,
-            color: if let InteractState::Disabled = interact_state { DISABLED_TEXT_COLOR } else { TEXT_COLOR },
-        });
+        self.layout = build_text(renderer, text, interact_state);
     }
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {
-        renderer.draw_rect(DrawRectArgs { rect: (self.position, self.size).into(), color: self.bg_color }, camera);
-        renderer.draw_text(self.position.to_vec2(), &self.layout, camera)
+        let style = Style { stroke: None, fill: Some(self.bg_color) };
+        renderer.draw_hexagon(DrawHexagonArgs { point: self.position, style }, camera);
+        renderer.draw_text(self.position.to_point().to_vec2(), &self.layout, camera)
     }
 }
 

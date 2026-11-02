@@ -10,14 +10,18 @@ const MATRIX:Affine = Affine::new([
     I_HAT.x, I_HAT.y, J_HAT.x, J_HAT.y, 0., 0.,
 ]);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct GridPoint {
     x: i32,
     y: i32,
 }
 
 impl GridPoint {
-    pub fn nearest_to(point: Point) -> GridPoint {
+    pub fn new(x:i32, y:i32) -> GridPoint {
+        GridPoint { x, y }
+    }
+
+    pub fn nearest(point: Point) -> GridPoint {
         let Point { x, y } = MATRIX.inverse() * point;
         let mut point = GridPoint { x: x.round() as i32, y: y.round() as i32 };
         let (rx, ry) = ((x+0.5).rem_euclid(1.), (y+0.5).rem_euclid(1.));
@@ -35,8 +39,12 @@ impl GridPoint {
         point
     }
 
+    pub fn to_point(self) -> Point {
+        (I_HAT * self.x as f64 + J_HAT * self.y as f64).to_point()
+    }
+
     pub fn to_hexagon(self) -> BezPath {
-        let center = Point::from(self);
+        let center = self.to_point();
         BezPath::from_vec(vec![
             PathEl::MoveTo(center + Vec2::new(-HALF_WIDTH, -HALF_HEIGHT)),
             PathEl::LineTo(center + Vec2::new(HALF_WIDTH, -HALF_HEIGHT)),
@@ -51,7 +59,7 @@ impl GridPoint {
 
 impl From<GridPoint> for Point {
     fn from(value: GridPoint) -> Self {
-        (I_HAT * value.x as f64 + J_HAT * value.y as f64).to_point()
+        value.to_point()
     }
 }
 
