@@ -13,6 +13,7 @@ const HOVERED_COLOR:Color = Color::from_rgb8(100, 100, 100);
 const PRESSED_COLOR:Color = Color::from_rgb8(50, 50, 50);
 const DISABLED_COLOR:Color = Color::from_rgb8(50, 50, 50);
 const DISABLED_TEXT_COLOR:Color = Color::from_rgb8(100, 100, 100);
+const BORDER_COLOR:Color = Color::from_rgb8(120, 120, 120);
 
 pub struct Button {
     id: usize,
@@ -60,7 +61,9 @@ impl Renderable for Button {
     }
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {
-        let style = Style { stroke: None, fill: Some(self.bg_color) };
+        let style = Style {
+            stroke: Some((4., BORDER_COLOR)), fill: Some(self.bg_color)
+        };
         renderer.draw_hexagon(DrawHexagonArgs { point: self.position, style }, camera);
         renderer.draw_text(self.position.to_point().to_vec2(), &self.layout, camera)
     }
