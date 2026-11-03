@@ -64,7 +64,7 @@ impl Window {
                 scene(),
                 &self.surface.target_view,
                 &vello::RenderParams {
-                    base_color: vello::peniko::Color::new([0.1, 0.2, 0.3, 1.0]),
+                    base_color: crate::render::BG_COLOR,
                     width: self.surface.config.width,
                     height: self.surface.config.height,
                     antialiasing_method: AaConfig::Msaa16,

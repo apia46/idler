@@ -1,3 +1,4 @@
+use macros::parse_color;
 use vello::peniko::Color;
 
 use crate::game::GameState;
@@ -7,13 +8,13 @@ use crate::render::draw::{DrawHexagonArgs, Style};
 use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer};
 
 const FONT_SIZE:f32 = 12.;
-const TEXT_COLOR:Color = Color::WHITE;
-const BG_COLOR:Color = Color::BLACK;
-const HOVERED_COLOR:Color = Color::from_rgb8(100, 100, 100);
-const PRESSED_COLOR:Color = Color::from_rgb8(50, 50, 50);
-const DISABLED_COLOR:Color = Color::from_rgb8(50, 50, 50);
-const DISABLED_TEXT_COLOR:Color = Color::from_rgb8(100, 100, 100);
-const BORDER_COLOR:Color = Color::from_rgb8(120, 120, 120);
+const TEXT_COLOR:Color = parse_color!("#ffffff");
+const BG_COLOR:Color = parse_color!("#666666");
+const HOVERED_COLOR:Color = parse_color!("#808080");
+const PRESSED_COLOR:Color = parse_color!("#555555");
+const DISABLED_COLOR:Color = parse_color!("#333333");
+const DISABLED_TEXT_COLOR:Color = parse_color!("#999999");
+const BORDER_COLOR:Color = parse_color!("#444444");
 
 pub struct Button {
     id: usize,

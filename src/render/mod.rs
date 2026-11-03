@@ -1,7 +1,10 @@
 use std::time::Duration;
 
+use macros::parse_color;
 use parley::{FontContext, LayoutContext};
 use vello::{Scene, peniko::{Color, Gradient, ImageBrush, ImageData}};
+
+pub const BG_COLOR:Color = parse_color!("#224466");
 
 use crate::game::GameState;
 use crate::render::camera::Camera;

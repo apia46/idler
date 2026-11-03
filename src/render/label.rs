@@ -1,3 +1,4 @@
+use macros::parse_color;
 use vello::{kurbo::Point, peniko::Color};
 
 use crate::game::GameState;
@@ -5,7 +6,7 @@ use crate::input::InputState;
 use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer};
 
 const FONT_SIZE:f32 = 16.;
-const TEXT_COLOR:Color = Color::WHITE;
+const TEXT_COLOR:Color = parse_color!("#ffffff");
 
 pub struct Label {
     #[expect(unused)]
