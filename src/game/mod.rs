@@ -1,71 +1,50 @@
 use std::time::Duration;
 
 use educe::Educe;
-use vello::kurbo::Point;
+use macros::parse_color;
 
-use crate::grid::GridPoint;
-use crate::num::{AddBoost, MulBoost, Number, PowBoost, Quantity};
+use crate::grid::{Direction, GridPoint};
+use crate::num::{AddBoost, Number, Quantity};
 use crate::render::Renderer;
-use crate::state::{State, button::NewButtonArgs, label::NewLabelArgs};
+use crate::state::{State, button::NewButtonArgs, resource::{NewResourceArgs, NewSegmentArgs}};
+
+pub type Reference<T> = (fn(&GameState) -> &T, fn(&mut GameState) -> &mut T);
+
+macro_rules! reference {
+    ($resource:ident) => {
+        (|s| &s.$resource, |s| &mut s.$resource)
+    };
+}
 
 #[derive(Educe)]
 #[educe(Default)]
 pub struct GameState {
-    #[educe(Default=1)]
+    #[educe(Default=0)]
     pub things: Quantity,
     pub things_per_second: AddBoost,
-    pub things_mult: MulBoost,
-    pub things_exp: PowBoost,
 }
 
 impl GameState {
     pub fn update(&mut self, dt:Duration) {
-        self.things += (self.things_per_second * self.things_mult ^ self.things_exp) * dt;
+        self.things += self.things_per_second * dt;
     }
 }
 
 pub fn test_section(state:&mut State, renderer:&mut Renderer) {
-    state.new_label(NewLabelArgs {
-        position: Point::new(20., 20.),
-        text: |s| format!("Things: {}\n+({} x {}) ^ {} = {}/s", s.things, s.things_per_second, s.things_mult, s.things_exp,
-            (s.things_per_second * s.things_mult) ^ s.things_exp
-        ),
-    }, renderer);
-    state.new_button(NewButtonArgs {
-        position: GridPoint::new(1, 1),
-        text: |s| format!("Convert things into\n+{}\nthings per second", s.things),
-        enabled: |s| s.things > 0,
-        pressed: |s| {
-            s.things_per_second += s.things.to_number();
-            s.things = Quantity::ZERO;
+    state.new_resource(NewResourceArgs {
+        reference: reference!(things),
+        start_button: NewButtonArgs {
+            position: GridPoint::new(2, 2), text: |s| format!("Things: {}\n+1", s.things),
+            enabled: |_| true,
+            pressed:|s| s.things += Number::ONE,
         },
-    }, renderer);
-    state.new_button({
-        fn expr(s:&GameState) -> Number { s.things_per_second.to_number().ln() }
-        NewButtonArgs {
-            position: GridPoint::new(3, 1),
-            text: |s| format!("Reset things and convert\nthings per second into\n+{}\nthings mult", expr(s)),
-            enabled: |s| expr(s) > 0,
-            pressed: |s| {
-                s.things_mult += expr(s);
-                s.things_per_second = AddBoost::ZERO;
-                s.things = Quantity::ONE;
-            },
-        }
-    }, renderer);
-    state.new_button({
-        fn expr(s:&GameState) -> Number { s.things_mult.to_number().ln().ln() - s.things_exp.to_number() }
-        NewButtonArgs {
-            position: GridPoint::new(1, 3),
-            text: |s| format!("Reset things and\nthings per second and\nconvert things mult into\n+{}\nthings exponent", expr(s)),
-            enabled: |s| expr(s) > 0,
-            pressed: |s| {
-                s.things_exp += expr(s);
-                s.things_mult = MulBoost::ONE;
-                s.things_per_second = AddBoost::ZERO;
-                s.things = Quantity::ONE;
-            },
-        }
+        fill_color: parse_color!("#ffcc11"),
+        back_color: parse_color!("#331166"),
+        border_color: parse_color!("#859dad"),
+        segments: vec![
+            NewSegmentArgs { direction: Direction::UP, length: 4, growth: Number::new(16.) },
+            NewSegmentArgs { direction: Direction::RUP, length: 2, growth: Number::new(4.) },
+        ],
     }, renderer);
 }
 

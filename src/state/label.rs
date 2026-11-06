@@ -11,6 +11,7 @@ pub struct NewLabelArgs {
 }
 
 impl State {
+    #[inline(always)]
     pub fn new_label(&mut self, args:NewLabelArgs, renderer:&mut Renderer) {
         let NewLabelArgs { position, text } = args;
         let count = &mut self.entities.labels;

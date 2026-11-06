@@ -172,9 +172,12 @@ num_type!(AddBoost);
 num_type!(MulBoost);
 num_type!(PowBoost);
 final_type!(RateOfChange);
+final_type!(Cost);
 
 impl Quantity { pub const ZERO:Quantity = Quantity(Number::ZERO); }
 impl AddBoost { pub const ZERO:AddBoost = AddBoost(Number::ZERO); }
+
+impl Cost { pub fn new(value:f64) -> Self { Cost(Number::new(value)) } }
 
 impl Default for AddBoost { fn default() -> Self { AddBoost::ZERO } }
 impl Default for MulBoost { fn default() -> Self { MulBoost::ONE } }

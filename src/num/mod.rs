@@ -15,22 +15,31 @@ impl Number {
     pub const ZERO:Number = Number(f64::NEG_INFINITY);
     pub const ONE:Number = Number(0.);
 
+    #[inline(always)]
     pub fn new(value:f64) -> Self {
         Number(value.ln())
     }
 
-    fn add_lesser(self, Number(value):Self) -> Self {
-        if value-self.0 < LN_EPSILON { self }
-        else { Number(self.0 + f64::ln_1p(f64::exp(value-self.0))) }
+    #[inline(always)]
+    fn add_lesser(self, value:Number) -> Self {
+        if self.0 == f64::NEG_INFINITY || value.0-self.0 < LN_EPSILON { self }
+        else { Number(self.0 + f64::ln_1p(f64::exp(value.0-self.0))) }
     }
 
-    fn sub_lesser(self, Number(value):Self) -> Self {
-        if value-self.0 < LN_EPSILON { self }
-        else { Number(self.0 + f64::ln_1p(-f64::exp(value-self.0))) }
+    #[inline(always)]
+    fn sub_lesser(self, value:Number) -> Self {
+        if self.0 == f64::NEG_INFINITY || value.0-self.0 < LN_EPSILON { self }
+        else { Number(self.0 + f64::ln_1p(-f64::exp(value.0-self.0))) }
     }
 
+    #[inline(always)]
     pub fn ln(self) -> Self {
         Self::new(self.0.max(0.))
+    }
+
+    #[inline(always)]
+    pub fn log_f64(self, base:Number) -> f64 {
+        self.0 / base.0
     }
 }
 

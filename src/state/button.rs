@@ -5,6 +5,7 @@ use crate::render::Renderer;
 use crate::render::{Renderable, button::{Button as RenderButton, NewButtonArgs as NewRenderButtonArgs}};
 use crate::state::State;
 
+#[derive(Clone, Copy)]
 pub struct NewButtonArgs {
     pub position: GridPoint,
     pub text: fn(&GameState) -> String,
@@ -13,6 +14,7 @@ pub struct NewButtonArgs {
 }
 
 impl State {
+    #[inline(always)]
     pub fn new_button(&mut self, args:NewButtonArgs, renderer:&mut Renderer) {
         let NewButtonArgs { position, text, enabled, pressed } = args;
         let count = &mut self.entities.buttons;

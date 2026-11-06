@@ -86,7 +86,7 @@ impl Camera {
                 self.scale = new_scale;
             },
             CameraState::Homing(state) => {
-                self.pos = (1.-adjusted_decay).lerp(self.pos.to_vec2(), state.target_pos.to_vec2()).to_point();
+                self.pos = (1.-adjusted_decay).lerp(self.pos, state.target_pos);
                 self.scale = (1.-adjusted_decay).lerp(self.scale, state.target_scale);
                 if self.pos.distance_squared(state.target_pos) < 1.
                     && (self.scale - state.target_scale).abs() < 0.01 {

@@ -1,14 +1,17 @@
 use parley::{Layout, Alignment, AlignmentOptions, FontWeight, GenericFamily, PositionedLayoutItem, StyleProperty};
-use vello::{kurbo::{Affine, Rect, Stroke, Vec2}, peniko::{Color, Fill, color::{AlphaColor, Srgb}}};
+use vello::{kurbo::{Affine, Line as KurboLine, Point, Rect, Stroke as KurboStroke, Vec2}, peniko::{Color, Fill as KurboFill, color::{AlphaColor, Srgb}}};
 
 use crate::render::{ColorBrush, Renderer};
 use crate::grid::GridPoint;
 use crate::render::camera::Camera;
 
+type Stroke = (f64, Color);
+type Fill = Color;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Style {
-    pub stroke: Option<(f64, Color)>,
-    pub fill: Option<Color>,
+    pub stroke: Option<Stroke>,
+    pub fill: Option<Fill>,
 }
 
 pub struct DrawRectArgs {
@@ -19,6 +22,12 @@ pub struct DrawRectArgs {
 pub struct DrawHexagonArgs {
     pub point: GridPoint,
     pub style: Style,
+}
+
+pub struct DrawLineArgs {
+    pub start: Point,
+    pub end: Point,
+    pub stroke: Stroke,
 }
 
 pub struct BuildTextArgs<'a> {
@@ -35,17 +44,25 @@ pub struct TextLayout {
 impl Renderer {
     #[expect(unused)]
     pub fn draw_rect(&mut self, args:DrawRectArgs, camera:&Camera) {
-        self.scene.fill(Fill::NonZero, camera.transform_inv(), args.color, None, &args.rect);
+        self.scene.fill(KurboFill::NonZero, camera.transform_inv(), args.color, None, &args.rect);
     }
 
     pub fn draw_hexagon(&mut self, args:DrawHexagonArgs, camera:&Camera) {
         let shape = args.point.to_hexagon();
         if let Some(color) = args.style.fill {
-            self.scene.fill(Fill::NonZero, camera.transform_inv(), color, None, &shape);
+            self.scene.fill(KurboFill::NonZero, camera.transform_inv(), color, None, &shape);
         }
         if let Some((width, color)) = args.style.stroke {
-            self.scene.stroke(&Stroke::new(width), camera.transform_inv(), color, None, &shape);
+            self.scene.stroke(&KurboStroke::new(width), camera.transform_inv(), color, None, &shape);
         }
+    }
+
+    pub fn draw_line(&mut self, args:DrawLineArgs, camera:&Camera) {
+        let (width, color) = args.stroke;
+        self.scene.stroke(
+            &KurboStroke::new(width), camera.transform_inv(), color, None,
+            &KurboLine { p0: args.start, p1: args.end }
+        );
     }
 
     pub fn build_text(&mut self, args:BuildTextArgs) -> TextLayout {
@@ -77,14 +94,14 @@ impl Renderer {
                             .normalized_coords(coords)
                             .transform(camera.transform_inv().pre_translate(translate))
                             .brush(glyph_run.style().brush)
-                            .draw(Fill::NonZero, glyph_run.positioned_glyphs().map(|g| {
+                            .draw(KurboFill::NonZero, glyph_run.positioned_glyphs().map(|g| {
                                 vello::Glyph { id: g.id, x: g.x, y: g.y }
                             }));
                     },
                     PositionedLayoutItem::InlineBox(inline_box) => {
                         let (x0, y0) = (inline_box.x as f64, inline_box.y as f64);
                         let (x1, y1) = (x0 + inline_box.width as f64, y0 + inline_box.height as f64);
-                        self.scene.fill(Fill::EvenOdd, Affine::default(), AlphaColor::<Srgb>::BLACK, None, &Rect {
+                        self.scene.fill(KurboFill::EvenOdd, Affine::default(), AlphaColor::<Srgb>::BLACK, None, &Rect {
                             x0, y0, x1, y1
                         });
                     },
