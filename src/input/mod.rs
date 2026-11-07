@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, ops::{BitOr, BitOrAssign}};
 
 use educe::Educe;
 use vello::kurbo::Vec2;
@@ -6,10 +6,13 @@ use winit::{event::{ElementState, KeyEvent, MouseButton}, keyboard::{KeyCode, Ph
 
 use crate::game::GameState;
 use crate::render::camera::{Camera, ScreenPoint};
-use crate::input::button::Button;
 use crate::state::State;
 
+mod state;
+
 pub mod button;
+
+pub use state::InputState;
 
 #[derive(Educe)]
 #[educe(Default)]
@@ -17,20 +20,6 @@ pub struct UserState {
     pub mouse_position: ScreenPoint,
     pub camera_drag: bool,
     pub held_keys: HashSet<KeyCode>,
-}
-
-#[derive(Default)]
-pub struct InputState {
-    pub user_state: UserState,
-    pub buttons: Vec<Button>,
-}
-
-impl InputState {
-    pub fn update(&mut self, state:&GameState, camera:&Camera) {
-        for button in &mut self.buttons {
-            button.update(&self.user_state, state, camera);
-        }
-    }
 }
 
 pub fn mouse_moved(to:ScreenPoint, state:&mut State) {
@@ -41,13 +30,10 @@ pub fn mouse_moved(to:ScreenPoint, state:&mut State) {
 }
 
 pub fn mouse_input(button_state:ElementState, mouse_button:MouseButton, state:&mut State) {
-    let mut anything_hovered:bool = false;
-    for button in &mut state.input_state.buttons {
-        button.mouse_input(button_state, mouse_button, &state.input_state.user_state, &state.render_state.camera, &mut state.game_state);
-        anything_hovered |= button.hovered();
-    }
+    let response = state.input_state.mouse_input(button_state, mouse_button, &state.render_state.camera, &mut state.game_state);
+
     let user_state = &mut state.input_state.user_state;
-    user_state.camera_drag = match (button_state, mouse_button, anything_hovered) {
+    user_state.camera_drag = match (button_state, mouse_button, response.hovered) {
         (ElementState::Pressed, MouseButton::Right, false) => true,
         (ElementState::Pressed, MouseButton::Middle, _) => true,
         (ElementState::Released, MouseButton::Right | MouseButton::Middle, _) => false,
@@ -91,5 +77,45 @@ impl UserState {
         }
         result
     }
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct MouseInputResponse {
+    hovered: bool,
+    consumed: bool,
+}
+
+impl BitOr for MouseInputResponse {
+    type Output = MouseInputResponse;
+    fn bitor(self, rhs: Self) -> Self::Output {
+        MouseInputResponse {
+            hovered: self.hovered | rhs.hovered,
+            consumed: self.consumed | rhs.consumed,
+        }
+    }
+}
+
+impl BitOrAssign for MouseInputResponse {
+    fn bitor_assign(&mut self, rhs: Self) {
+        *self = *self | rhs
+    }
+}
+
+pub trait Inputable {
+    type NewArgs;
+    #[must_use]
+    fn new(id:usize, args:Self::NewArgs) -> Self;
+
+    fn update(&mut self, user_state:&UserState, game_state:&GameState, camera:&Camera) {
+        let _ = user_state;
+        let _ = game_state;
+        let _ = camera;
+    }
+
+    #[must_use]
+    fn mouse_input(
+        &mut self, button_state:ElementState, mouse_button:MouseButton,
+        user_state:&UserState, camera:&Camera, game_state:&mut GameState
+    ) -> MouseInputResponse;
 }
 

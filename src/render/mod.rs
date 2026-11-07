@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use educe::Educe;
 use macros::parse_color;
 use parley::{FontContext, LayoutContext};
 use vello::{Scene, peniko::{Color, Gradient, ImageBrush, ImageData}};
@@ -42,6 +43,15 @@ pub struct Renderer {
     layout_cx: LayoutContext<ColorBrush>,
 }
 
+#[derive(Educe)]
+#[educe(Default)]
+pub struct RendererState {
+    pub previous_frame: Duration,
+    pub delta_time: Duration,
+    #[educe(Default=Duration::from_secs_f64(1./60.))]
+    pub refresh_rate: Duration,
+}
+
 impl Renderer {
     pub fn update(&mut self, render_state: &mut RenderState, game_state:&GameState, input_state:&InputState) {
         render_state.update(self, game_state, input_state);
@@ -65,7 +75,7 @@ pub trait Renderable {
     fn new(id:usize, args:Self::NewArgs, renderer:&mut Renderer, state:&GameState) -> Self;
 
     fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, input_state:&InputState) {
-        let _ =renderer;
+        let _ = renderer;
         let _ = game_state;
         let _ = input_state;
     }
