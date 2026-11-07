@@ -12,10 +12,12 @@ const VELOCITY_DECAY:f64 = 1.5e-6;
 pub struct ScreenPoint(Point);
 
 impl ScreenPoint {
+    #[must_use]
     pub fn new(point:Point) -> Self {
         Self(point)
     }
 
+    #[must_use]
     pub fn to_vec2(self) -> Vec2 {
         self.0.to_vec2()
     }
@@ -54,14 +56,17 @@ struct HomingCameraState {
 }
 
 impl Camera {
+    #[must_use]
     pub fn to_world(&self, value:ScreenPoint) -> Point {
         self.transform() * value.0
     }
 
+    #[must_use]
     pub fn transform(&self) -> Affine {
         Affine::scale(self.scale).then_translate(self.pos.to_vec2())
     }
 
+    #[must_use]
     pub fn transform_inv(&self) -> Affine {
         self.transform().inverse()
     }

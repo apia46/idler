@@ -51,6 +51,7 @@ impl Renderer {
         render_state.camera.process(&input_state.user_state, dt);
     }
 
+    #[must_use]
     pub fn draw_scene(&mut self, state:&RenderState) -> &Scene {
         self.scene.reset();
         state.draw(self);
@@ -60,6 +61,7 @@ impl Renderer {
 
 pub trait Renderable {
     type NewArgs;
+    #[must_use]
     fn new(id:usize, args:Self::NewArgs, renderer:&mut Renderer, state:&GameState) -> Self;
 
     fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, input_state:&InputState) {

@@ -3,6 +3,7 @@ use std::ops::{Add, Sub, Mul};
 use vello::kurbo::{Point, Vec2};
 
 pub trait Lerp<T> {
+    #[must_use]
     fn lerp(self, from: T, to: T) -> T;
 }
 

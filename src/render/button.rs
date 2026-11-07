@@ -29,6 +29,7 @@ pub struct NewButtonArgs {
     pub text: fn(&GameState) -> String,
 }
 
+#[must_use]
 fn build_text(renderer:&mut Renderer, text:&str, state:InteractState) -> TextLayout {
     renderer.build_text(BuildTextArgs {
         text, font_size: FONT_SIZE,

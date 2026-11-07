@@ -24,6 +24,7 @@ pub struct NewButtonArgs {
 }
 
 impl Button {
+    #[must_use]
     pub fn new(id: usize, args: NewButtonArgs) -> Self {
         let NewButtonArgs { position, pressed, enabled } = args;
         Self {
@@ -32,6 +33,7 @@ impl Button {
         }
     }
 
+    #[must_use]
     pub fn hovered(&self) -> bool {
         match self.state {
             InteractState::Hovered | InteractState::Pressed => true,
@@ -51,7 +53,8 @@ impl Button {
         }
     }
 
-    pub fn mouse_input(&mut self, button_state:ElementState, mouse_button:MouseButton,
+    pub fn mouse_input(
+        &mut self, button_state:ElementState, mouse_button:MouseButton,
         user_state:&UserState, camera:&Camera, game_state:&mut GameState
     ) {
         if !matches!(mouse_button, MouseButton::Left) { return; };

@@ -25,6 +25,7 @@ struct Game {
 }
 
 impl Game {
+    #[must_use]
     async fn new(event_loop:&ActiveEventLoop) -> Game {
         Game {
             window: Window::new(event_loop).await,

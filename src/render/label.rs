@@ -21,6 +21,7 @@ pub struct NewLabelArgs {
     pub text: fn(&GameState) -> String,
 }
 
+#[must_use]
 fn build_text(renderer:&mut Renderer, text:&str) -> TextLayout {
     renderer.build_text(BuildTextArgs { text, font_size: FONT_SIZE, color: TEXT_COLOR, center: false })
 }

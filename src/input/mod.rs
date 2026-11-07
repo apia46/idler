@@ -80,6 +80,7 @@ pub fn keyboard_input(event:KeyEvent, state:&mut State) {
 }
 
 impl UserState {
+    #[must_use]
     pub fn keyboard_input_direction(&self) -> Vec2 {
         let mut result = Vec2::ZERO;
         for (key, direction) in [

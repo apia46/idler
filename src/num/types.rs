@@ -104,14 +104,17 @@ macro_rules! num_type {
             #[allow(unused)]
             pub const ONE:$ty = $ty(Number::ONE);
 
+            #[must_use]
             #[allow(unused)]
             pub fn new(value:f64) -> Self { Self(Number::new(value)) }
 
+            #[must_use]
             #[allow(unused)]
             pub fn to_number(self) -> Number {
                 self.0
             }
 
+            #[must_use]
             #[allow(unused)]
             pub fn as_number(&mut self) -> &mut Number {
                 &mut self.0
@@ -177,8 +180,8 @@ num_type!(PowBoost);
 final_type!(RateOfChange);
 final_type!(Cost);
 
-impl Quantity { pub const ZERO:Quantity = Quantity(Number::ZERO); }
-impl AddBoost { pub const ZERO:AddBoost = AddBoost(Number::ZERO); }
+impl Quantity { #[allow(unused)] pub const ZERO:Quantity = Quantity(Number::ZERO); }
+impl AddBoost { #[allow(unused)] pub const ZERO:AddBoost = AddBoost(Number::ZERO); }
 
 impl Default for AddBoost { fn default() -> Self { AddBoost::ZERO } }
 impl Default for MulBoost { fn default() -> Self { MulBoost::ONE } }

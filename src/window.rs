@@ -16,6 +16,7 @@ pub struct Window {
 }
 
 impl Window {
+    #[must_use]
     pub async fn new(event_loop:&ActiveEventLoop) -> Self {
         let window = Arc::new(event_loop.create_window(WinitWindow::default_attributes()).unwrap());
         let size = window.inner_size();
@@ -27,6 +28,7 @@ impl Window {
         Self { window, render_context, surface, renderer, valid_surface: true, inv_scale_factor }
     }
 
+    #[must_use]
     pub fn to_screen(&self, from:PhysicalPosition<f64>) -> ScreenPoint {
         ScreenPoint::new((Vec2::new(from.x, from.y) * self.inv_scale_factor).to_point())
     }
@@ -39,11 +41,11 @@ impl Window {
         self.window.request_redraw();
     }
 
+    #[must_use]
     pub fn get_refresh_rate(&self) -> Option<Duration> {
         self.window.current_monitor().and_then(|m| m.refresh_rate_millihertz())
             .map(|t| Duration::from_secs_f64(1000. / t as f64))
     }
-
 
     pub fn resize(&mut self, size:PhysicalSize<u32>) {
         if size.width == 0 && size.height == 0 {

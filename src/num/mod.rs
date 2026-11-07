@@ -2,6 +2,7 @@ use std::{f64::consts::LN_10, fmt::Display, ops::{Add, AddAssign, BitXor, BitXor
 
 mod types;
 
+#[expect(unused)]
 pub use types::{Quantity, AddBoost, MulBoost, PowBoost};
 
 const LN_E308:f64 = 709.78271289338399684324569237317280570931213758490138021957632972;
@@ -16,28 +17,34 @@ impl Number {
     pub const ONE:Number = Number(0.);
 
     #[inline(always)]
+    #[must_use]
     pub fn new(value:f64) -> Self {
         Number(value.ln())
     }
 
     #[inline(always)]
+    #[must_use]
     fn add_lesser(self, value:Number) -> Self {
         if self.0 == f64::NEG_INFINITY || value.0-self.0 < LN_EPSILON { self }
         else { Number(self.0 + f64::ln_1p(f64::exp(value.0-self.0))) }
     }
 
     #[inline(always)]
+    #[must_use]
     fn sub_lesser(self, value:Number) -> Self {
         if self.0 == f64::NEG_INFINITY || value.0-self.0 < LN_EPSILON { self }
         else { Number(self.0 + f64::ln_1p(-f64::exp(value.0-self.0))) }
     }
 
     #[inline(always)]
+    #[must_use]
+    #[expect(unused)]
     pub fn ln(self) -> Self {
         Self::new(self.0.max(0.))
     }
 
     #[inline(always)]
+    #[must_use]
     pub fn log_f64(self, base:Number) -> f64 {
         self.0 / base.0
     }

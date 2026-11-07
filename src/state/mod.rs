@@ -23,6 +23,7 @@ pub struct State {
 #[derive(Default)]
 pub struct Entities {
     pub buttons: usize,
+    #[expect(unused)]
     pub labels: usize,
     pub resources: usize,
 }

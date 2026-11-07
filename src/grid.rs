@@ -19,13 +19,16 @@ pub struct GridPoint {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(unused)]
 pub enum Direction { UP, RUP, ROWN, DOWN, LOWN, LUP }
 
 impl GridPoint {
+    #[must_use]
     pub fn new(x:i32, y:i32) -> GridPoint {
         GridPoint { x, y }
     }
 
+    #[must_use]
     pub fn nearest(point: Point) -> GridPoint {
         let Point { x, y } = MATRIX.inverse() * point;
         let mut point = GridPoint { x: x.round() as i32, y: y.round() as i32 };
@@ -44,10 +47,12 @@ impl GridPoint {
         point
     }
 
+    #[must_use]
     pub fn to_point(self) -> Point {
         (I_HAT * self.x as f64 + J_HAT * self.y as f64).to_point()
     }
 
+    #[must_use]
     pub fn to_hexagon(self) -> BezPath {
         let center = self.to_point();
         BezPath::from_vec(vec![

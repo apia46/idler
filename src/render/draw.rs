@@ -65,6 +65,7 @@ impl Renderer {
         );
     }
 
+    #[must_use]
     pub fn build_text(&mut self, args:BuildTextArgs) -> TextLayout {
         let mut builder = self.layout_cx.ranged_builder(&mut self.font_cx, args.text, 1., true);
         builder.push_default(GenericFamily::SystemUi);
