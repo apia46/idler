@@ -64,9 +64,10 @@ impl Renderable for ResourceTree {
     }
 
     fn update(&mut self, _renderer:&mut Renderer, game_state:&GameState, _input_state:&crate::input::InputState) {
-        let resource = (self.reference.0)(game_state).to_number();
+        let resource = game_state.fetch(self.reference).to_number();
         for segment in &mut self.segments {
-            segment.progress = (resource / segment.base.to_number()).log_f64(segment.growth).clamp(0., 1.);
+            segment.progress = if segment.growth == Number::ONE { if resource >= segment.base {1.} else {0.} }
+            else {(resource / segment.base.to_number()).log_f64(segment.growth).clamp(0., 1.)};
         }
     }
 

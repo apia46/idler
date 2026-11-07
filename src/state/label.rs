@@ -11,7 +11,6 @@ pub struct NewLabelArgs {
 }
 
 impl State {
-    #[inline(always)]
     #[expect(unused)]
     pub fn new_label(&mut self, args:NewLabelArgs, renderer:&mut Renderer) {
         let NewLabelArgs { position, text } = args;

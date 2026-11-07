@@ -1,6 +1,6 @@
 use winit::event::{ElementState, MouseButton};
 
-use crate::{game::GameState, input::{Inputable, MouseInputResponse, UserState, button::Button}, render::camera::Camera};
+use crate::{game::GameState, input::{Inputable, MouseInputResponse, UserState, button::Button, upgrade::Upgrade}, render::camera::Camera};
 
 macro_rules! input_state {
     {
@@ -37,5 +37,6 @@ macro_rules! input_state {
 
 input_state! {
     buttons: Vec<Button>,
+    upgrades: Vec<Upgrade>,
 }
 

@@ -13,7 +13,6 @@ pub struct NewButtonArgs {
 }
 
 impl State {
-    #[inline(always)]
     pub fn new_button(&mut self, args:NewButtonArgs, renderer:&mut Renderer) {
         let NewButtonArgs { position, text, enabled, pressed } = args;
         let count = &mut self.entities.buttons;

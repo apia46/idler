@@ -3,7 +3,7 @@ use std::{f64::consts::LN_10, fmt::Display, ops::{Add, AddAssign, BitXor, BitXor
 mod types;
 
 #[expect(unused)]
-pub use types::{Quantity, AddBoost, MulBoost, PowBoost};
+pub use types::{Quantity, AddBoost, MulBoost, PowBoost, RateOfChange, Cost, DiscreteBoost};
 
 const LN_E308:f64 = 709.78271289338399684324569237317280570931213758490138021957632972;
 

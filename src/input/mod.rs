@@ -11,6 +11,7 @@ use crate::state::State;
 mod state;
 
 pub mod button;
+pub mod upgrade;
 
 pub use state::InputState;
 

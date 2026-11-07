@@ -12,9 +12,15 @@ pub struct Button {
     #[expect(unused)]
     id: usize,
     position: GridPoint,
+    state: InteractState,
     enabled: fn(&GameState) -> bool,
     pressed: fn(&mut GameState),
-    pub state: InteractState,
+}
+
+impl Button {
+    pub fn state(&self) -> InteractState {
+        self.state
+    }
 }
 
 pub struct NewButtonArgs {

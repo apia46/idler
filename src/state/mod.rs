@@ -7,6 +7,7 @@ use crate::{game::GameState, input::InputState, render::{RenderState, Renderer}}
 pub mod button;
 pub mod label;
 pub mod resource;
+pub mod upgrade;
 
 #[derive(Educe)]
 #[educe(Default)]
@@ -26,6 +27,7 @@ pub struct Entities {
     #[expect(unused)]
     pub labels: usize,
     pub resources: usize,
+    pub upgrades: usize,
 }
 
 impl State {

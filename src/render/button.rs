@@ -52,7 +52,7 @@ impl Renderable for Button {
 
     fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, input_state:&InputState) {
         let text = &(self.text_fn)(game_state);
-        let interact_state = input_state.buttons[self.id].state;
+        let interact_state = input_state.buttons[self.id].state();
         self.bg_color = match interact_state {
             InteractState::None => BG_COLOR,
             InteractState::Hovered => HOVERED_COLOR,

@@ -1,6 +1,6 @@
 use crate::game::GameState;
 use crate::input::InputState;
-use crate::render::{RendererState, camera::Camera, Renderable, Renderer, button::Button, label::Label, resource::ResourceTree};
+use crate::render::{RendererState, camera::Camera, Renderable, Renderer, button::Button, label::Label, upgrade::Upgrade, resource::ResourceTree};
 
 macro_rules! render_state {
     {
@@ -36,6 +36,7 @@ macro_rules! render_state {
 render_state! {
     resource_trees: Vec<ResourceTree>,
     buttons: Vec<Button>,
+    upgrades: Vec<Upgrade>,
     labels: Vec<Label>,
 }
 
