@@ -5,8 +5,8 @@ use crate::render::{ColorBrush, Renderer};
 use crate::grid::GridPoint;
 use crate::render::camera::Camera;
 
-type Stroke = (f64, Color);
-type Fill = Color;
+pub type Stroke = (f64, Color);
+pub type Fill = Color;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Style {

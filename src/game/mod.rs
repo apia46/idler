@@ -6,7 +6,8 @@ use macros::parse_color;
 use crate::grid::{Direction, GridPoint};
 use crate::num::{AddBoost, Number, Quantity};
 use crate::render::Renderer;
-use crate::state::{State, button::NewButtonArgs, resource::{NewResourceArgs, NewSegmentArgs}};
+use crate::state::resource::NewSegmentArgs;
+use crate::state::{State, button::NewButtonArgs, resource::{NewResourceArgs, ResourceBuilder}};
 
 pub type Reference<T> = (fn(&GameState) -> &T, fn(&mut GameState) -> &mut T);
 
@@ -31,20 +32,26 @@ impl GameState {
 }
 
 pub fn test_section(state:&mut State, renderer:&mut Renderer) {
-    state.new_resource(NewResourceArgs {
+    ResourceBuilder::new(NewResourceArgs {
         reference: reference!(things),
         start_button: NewButtonArgs {
-            position: GridPoint::new(2, 2), text: |s| format!("Things: {}\n+1", s.things),
+            position: GridPoint::new(2, 2),
+            text: |s| format!("Things: {}\n+1", s.things),
             enabled: |_| true,
-            pressed:|s| s.things += Number::ONE,
+            pressed: |s| s.things += Number::ONE,
         },
+        start_direction: Direction::UP,
         fill_color: parse_color!("#ffcc11"),
         back_color: parse_color!("#331166"),
         border_color: parse_color!("#859dad"),
-        segments: vec![
-            NewSegmentArgs { direction: Direction::UP, length: 4, growth: Number::new(16.) },
-            NewSegmentArgs { direction: Direction::RUP, length: 2, growth: Number::new(4.) },
-        ],
-    }, renderer);
+    })
+        .segment(NewSegmentArgs { direction: Direction::UP, length: 3, growth: 16.into() })
+        .branch(|b| b
+            .segment(NewSegmentArgs { direction: Direction::LUP, length: 2, growth: 4.into() })
+            .segment(NewSegmentArgs { direction: Direction::UP, length: 1, growth: 2.into() })
+        )
+        .segment(NewSegmentArgs { direction: Direction::UP, length: 1, growth: 2.into() })
+        .segment(NewSegmentArgs { direction: Direction::RUP, length: 3, growth: 8.into() })
+    .build(state, renderer);
 }
 

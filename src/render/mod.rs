@@ -16,7 +16,7 @@ pub mod camera;
 
 pub mod button;
 pub mod label;
-pub mod segment;
+pub mod resource;
 
 pub use state::RenderState;
 

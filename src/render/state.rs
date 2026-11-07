@@ -4,7 +4,7 @@ use educe::Educe;
 
 use crate::game::GameState;
 use crate::input::InputState;
-use crate::render::{camera::Camera, Renderable, Renderer, button::Button, label::Label, segment::Segment};
+use crate::render::{camera::Camera, Renderable, Renderer, button::Button, label::Label, resource::ResourceTree};
 
 macro_rules! render_state {
     {
@@ -47,7 +47,7 @@ pub struct RendererState {
 }
 
 render_state! {
-    segments: Vec<Segment>,
+    resource_trees: Vec<ResourceTree>,
     buttons: Vec<Button>,
     labels: Vec<Label>,
 }

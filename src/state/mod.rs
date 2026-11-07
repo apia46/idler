@@ -24,7 +24,7 @@ pub struct State {
 pub struct Entities {
     pub buttons: usize,
     pub labels: usize,
-    pub segments: usize,
+    pub resources: usize,
 }
 
 impl State {
