@@ -1,5 +1,5 @@
 # Idler (working title)
-Idle game made in low level rust.
+Idle game made in low level rust. Features a unique spatial logarithmic tree thing for resources. Kind of hard to explain, but imagine a thermometer, but logarithmic, and with branches, and you can buy upgrades if it gets high enough, and...
 ## How to run
 The latest release should have a "idler-windows.exe" and a "idler-linux". Find the appropriate one, and run it. The windows version should work on windows 11 and the linux version should work anywhere. Dynamically linked libraries may be missing in either case, but I don't really know which ones are needed, sorry.
 ## Controls
