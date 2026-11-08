@@ -4,7 +4,7 @@ use educe::Educe;
 use vello::kurbo::Vec2;
 use winit::{event::{ElementState, KeyEvent, MouseButton}, keyboard::{KeyCode, PhysicalKey}};
 
-use crate::game::GameState;
+use crate::{game::GameState, window::Window};
 use crate::render::camera::{Camera, ScreenPoint};
 use crate::state::State;
 
@@ -46,7 +46,7 @@ pub fn mouse_scroll(amount:Vec2, state:&mut State) {
     state.render_state.camera.scroll_input(amount.y, state.input_state.user_state.mouse_position);
 }
 
-pub fn keyboard_input(event:KeyEvent, state:&mut State) {
+pub fn keyboard_input(event:KeyEvent, state:&mut State, window:&Window) {
     let KeyEvent { physical_key:PhysicalKey::Code(key), state:key_state, .. } = event else { return; };
     let held_keys = &mut state.input_state.user_state.held_keys;
     match key_state {
@@ -54,7 +54,7 @@ pub fn keyboard_input(event:KeyEvent, state:&mut State) {
             held_keys.insert(key);
             match key {
                 KeyCode::KeyH => {
-                    state.render_state.camera.home();
+                    state.render_state.camera.home(&window);
                 },
                 _ => {}
             }

@@ -3,7 +3,7 @@ use std::time::Duration;
 use educe::Educe;
 use vello::kurbo::{Affine, Point, Vec2};
 
-use crate::{input::UserState, util::Lerp};
+use crate::{input::UserState, util::Lerp, window::Window};
 
 const CAMERA_SPEED:f64 = 30000.;
 const VELOCITY_DECAY:f64 = 1.5e-6;
@@ -13,8 +13,8 @@ pub struct ScreenPoint(Point);
 
 impl ScreenPoint {
     #[must_use]
-    pub fn new(point:Point) -> Self {
-        Self(point)
+    pub fn new(point:impl Into<Point>) -> Self {
+        Self(point.into())
     }
 
     #[must_use]
@@ -71,6 +71,15 @@ impl Camera {
         self.transform().inverse()
     }
 
+    fn default_pos(&self, window:&Window) -> Point {
+        (window.size.to_vec2() * -0.5 / self.scale).to_point()
+    }
+
+    pub fn go_to_default_pos(&mut self, window:&Window) {
+        self.cancel_homing();
+        self.pos = self.default_pos(window);
+    }
+
     pub fn process(&mut self, user_state:&UserState, dt:Duration) {
         let dt = dt.as_secs_f64();
         let adjusted_decay = VELOCITY_DECAY.powf(dt);
@@ -123,8 +132,8 @@ impl Camera {
         }
     }
 
-    pub fn home(&mut self) {
-        self.state = CameraState::Homing(HomingCameraState { target_pos: Point::new(0., 0.), target_scale: 1. });
+    pub fn home(&mut self, window:&Window) {
+        self.state = CameraState::Homing(HomingCameraState { target_pos: self.default_pos(window), target_scale: 1. });
     }
 }
 

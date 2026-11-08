@@ -33,6 +33,7 @@ impl ApplicationHandler for AppHandler {
         event_loop.set_control_flow(winit::event_loop::ControlFlow::Poll);
         let mut game = pollster::block_on(Game::new(event_loop));
         game::test_section(&mut game.state, &mut game.renderer);
+        game.state.render_state.camera.go_to_default_pos(&game.window);
         self.game = Some(game);
     }
 
@@ -43,12 +44,14 @@ impl ApplicationHandler for AppHandler {
                 game.state.render_state.renderer_state.refresh_rate = refresh_rate;
             },
             (WindowEvent::CloseRequested, _) => event_loop.exit(),
-            (WindowEvent::Resized(size), Some(game)) => game.window.resize(size),
+            (WindowEvent::Resized(size), Some(game)) => {
+                game.window.resize(size);
+            },
             (WindowEvent::ScaleFactorChanged { scale_factor, inner_size_writer:_ }, Some(game)) => {
                 game.window.update_scale_factor(scale_factor);
             },
             (WindowEvent::KeyboardInput { device_id:_ , event, is_synthetic:_ }, Some(game)) => {
-                input::keyboard_input(event, &mut game.state);
+                input::keyboard_input(event, &mut game.state, &game.window);
             },
             (WindowEvent::CursorMoved { device_id:_, position }, Some(game)) => {
                 input::mouse_moved(game.window.to_screen(position), &mut game.state);

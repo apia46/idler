@@ -13,6 +13,16 @@ pub struct Window {
     renderer: Renderer,
     valid_surface: bool,
     inv_scale_factor: f64,
+    pub size: ScreenPoint,
+}
+
+fn to_position(value:PhysicalSize<u32>) -> PhysicalPosition<f64> {
+    let PhysicalSize { width, height } = value;
+    PhysicalPosition { x: width as f64, y: height as f64 }
+}
+
+fn to_screen(inv_scale_factor:f64, from:PhysicalPosition<f64>) -> ScreenPoint {
+    ScreenPoint::new((Vec2::new(from.x, from.y) * inv_scale_factor).to_point())
 }
 
 impl Window {
@@ -25,12 +35,12 @@ impl Window {
         let surface = render_context.create_surface(window.clone(), size.width, size.height, wgpu::PresentMode::AutoVsync).await.unwrap();
         let renderer = Renderer::new(&render_context.devices[surface.dev_id].device, RendererOptions::default()).unwrap();
         let inv_scale_factor = 1./window.scale_factor();
-        Self { window, render_context, surface, renderer, valid_surface: true, inv_scale_factor }
+        Self { window, render_context, surface, renderer, valid_surface: true, inv_scale_factor, size: to_screen(inv_scale_factor, to_position(size)) }
     }
 
     #[must_use]
     pub fn to_screen(&self, from:PhysicalPosition<f64>) -> ScreenPoint {
-        ScreenPoint::new((Vec2::new(from.x, from.y) * self.inv_scale_factor).to_point())
+        to_screen(self.inv_scale_factor, from)
     }
 
     pub fn update_scale_factor(&mut self, to:f64) {
@@ -48,6 +58,7 @@ impl Window {
     }
 
     pub fn resize(&mut self, size:PhysicalSize<u32>) {
+        self.size = self.to_screen(to_position(size));
         if size.width == 0 && size.height == 0 {
             self.valid_surface = false;
         } else {

@@ -1,6 +1,6 @@
 use vello::peniko::Color;
 
-use crate::game::{Reference, Upgrade as GameUpgrade};
+use crate::game::{GameState, Reference, Upgrade as GameUpgrade};
 use crate::grid::{Direction, GridPoint};
 use crate::num::{Cost, Number, Quantity};
 use crate::render::Renderable;
@@ -10,8 +10,10 @@ use crate::state::{State, button::NewButtonArgs};
 
 pub struct NewResourceArgs {
     pub reference: Reference<Quantity>,
+    pub name: &'static str,
     pub start_button: NewButtonArgs,
     pub start_direction: Direction,
+    pub growth: Number,
     pub fill_color: Color,
     pub back_color: Color,
     pub border_color: Color,
@@ -20,17 +22,17 @@ pub struct NewResourceArgs {
 pub struct NewSegmentArgs {
     pub direction: Direction,
     pub length: u32,
-    pub growth: Number,
 }
 
 pub struct NewUpgradeArgs {
     pub reference: Reference<GameUpgrade>,
     pub direction: Direction,
-    pub description: String,
+    pub description: fn(&GameState) -> String,
 }
 
 pub struct ResourceBuilder {
     reference: Reference<Quantity>,
+    name: &'static str,
     start_button: NewButtonArgs,
     fill_color: Color,
     back_color: Color,
@@ -53,32 +55,37 @@ struct SegmentBuilder {
 struct ResourceBuilderState {
     position: GridPoint,
     value: Quantity,
+    growth: Number,
 }
 
 impl ResourceBuilder {
     #[must_use]
     pub fn new(args:NewResourceArgs) -> Self {
         let NewResourceArgs {
-            reference, start_button, start_direction,
-            fill_color, back_color, border_color
+            reference, name, start_button, start_direction,
+            fill_color, back_color, border_color, growth,
         } = args;
         ResourceBuilder {
-            reference, start_button, fill_color, back_color, border_color,
+            reference, name, start_button, fill_color, back_color, border_color,
             segments: vec![SegmentBuilder {
                 start: start_button.position, direction: start_direction, length: 1,
-                base: Quantity::new(0.5), growth: Number::new(2.),
+                base: Quantity::from(growth.powf(-0.5)), growth,
             }],
             upgrades: vec![],
-            state: ResourceBuilderState { position: start_button.position + start_direction * 1, value: Quantity::ONE }
+            state: ResourceBuilderState { position: start_button.position + start_direction * 1, value: Quantity::ONE, growth }
         }
     }
 
     #[must_use]
     pub fn segment(mut self, args:NewSegmentArgs) -> Self {
-        let NewSegmentArgs { direction, length, growth } = args;
-        self.segments.push(SegmentBuilder { start: self.state.position, direction, length, base: self.state.value, growth });
+        let NewSegmentArgs { direction, length } = args;
+        let half_growth = self.state.growth.powf(0.5);
+        let total_growth = self.state.growth.powf(length as f64);
+        self.segments.push(SegmentBuilder {
+            start: self.state.position, direction, length, base: (self.state.value.to_number() * half_growth).into(), growth: total_growth
+        });
         self.state.position += direction * length;
-        *self.state.value.as_number() *= growth;
+        *self.state.value.as_number() *= total_growth;
         self
     }
 
@@ -93,11 +100,13 @@ impl ResourceBuilder {
     #[must_use]
     pub fn upgrade(mut self, args:NewUpgradeArgs) -> Self {
         let NewUpgradeArgs { reference, direction, description } = args;
+        let description = description.into();
+        let resource_name = self.name;
         self = self.branch(|mut branch| {
-            branch = branch.segment(NewSegmentArgs { direction, length: 1, growth: 1.into() });
+            branch = branch.segment(NewSegmentArgs { direction, length: 1 });
             branch.upgrades.push(NewInternalUpgradeArgs {
                 position: branch.state.position, description, cost: Cost::from(branch.state.value.to_number()),
-                reference, resource_reference: branch.reference
+                reference, resource_name, resource_reference: branch.reference
             });
             branch
         });

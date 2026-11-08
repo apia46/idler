@@ -2,8 +2,7 @@ use std::{f64::consts::LN_10, fmt::Display, ops::{Add, AddAssign, BitXor, BitXor
 
 mod types;
 
-#[expect(unused)]
-pub use types::{Quantity, AddBoost, MulBoost, PowBoost, RateOfChange, Cost, DiscreteBoost};
+pub use types::{Quantity, RateOfChange, Cost, Gain};
 
 const LN_E308:f64 = 709.78271289338399684324569237317280570931213758490138021957632972;
 
@@ -45,8 +44,14 @@ impl Number {
 
     #[inline(always)]
     #[must_use]
-    pub fn log_f64(self, base:Number) -> f64 {
+    pub fn logf(self, base:Number) -> f64 {
         self.0 / base.0
+    }
+
+    #[inline(always)]
+    #[must_use]
+    pub fn powf(self, exp:f64) -> Number {
+        Number(self.0 * exp)
     }
 }
 

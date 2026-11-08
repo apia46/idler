@@ -1,7 +1,6 @@
-use std::{fmt::Display, ops::{Add, AddAssign, BitXor, Mul, Sub, SubAssign}, cmp::Ordering, time::Duration};
+use std::{fmt::Display, ops::{Add, AddAssign, Mul, Sub, SubAssign, BitXor}, cmp::Ordering, time::Duration};
 
 use crate::num::Number;
-use crate::game::Upgrade;
 
 macro_rules! operation {
     ($op_trait:ident : $lhs:ty [$op_fn:ident] $rhs:ty => $out:ident with |$a:ident, $b:ident| $expr:expr) => {
@@ -72,6 +71,17 @@ macro_rules! symm_comparison {
         comparison!($lhs, $rhs);
         comparison!($rhs, $lhs);
     }
+}
+
+macro_rules! default_zero {
+    ($ty:ident) => {
+        impl $ty {
+            #[allow(unused)]
+            pub const ZERO:$ty = $ty(Number::ZERO);
+        }
+
+        impl Default for $ty { fn default() -> Self { $ty::ZERO } }
+    };
 }
 
 macro_rules! num_type {
@@ -151,32 +161,14 @@ macro_rules! num_type {
                 self.0 = self.0 - rhs;
             }
         }
-    }
-}
-macro_rules! boost_type {
-    ($ty:ident) => {
-        num_type!($ty);
-
-        impl $ty {
-            #[allow(unused)]
-            pub fn upgr(upgrade:Upgrade, value:Self) -> Self {
-                if upgrade.purchased { value } else { Default::default() }
-            }
-        }
     };
     ($ty:ident, ZERO) => {
-        boost_type!($ty);
-
-        impl $ty {
-            #[allow(unused)]
-            pub const ZERO:$ty = $ty(Number::ZERO);
-        }
-
-        impl Default for $ty { fn default() -> Self { $ty::ZERO } }
+        num_type!($ty);
+        default_zero!($ty);
     };
     ($ty:ident, ONE) => {
-        boost_type!($ty);
-        impl Default for $ty { fn default() -> Self { $ty::ONE } }
+        num_type!($ty);
+        default_one!($ty);
     };
 }
 
@@ -188,9 +180,8 @@ macro_rules! num_operation {
 
 macro_rules! final_type {
     ($ty:ident) => {
-        num_type!($ty);
-        num_operation!(Add: Quantity [add] $ty => Quantity );
-        num_operation!(Sub: Quantity [sub] $ty => Quantity );
+        num_operation!(Add: Quantity [add] $ty => Quantity);
+        num_operation!(Sub: Quantity [sub] $ty => Quantity);
 
         impl AddAssign<$ty> for Quantity {
             fn add_assign(&mut self, rhs:$ty) {
@@ -203,46 +194,44 @@ macro_rules! final_type {
                 *self = *self - rhs;
             }
         }
-    }
-}
-
-macro_rules! convert {
-    ($from:ident => $to:ident) => {
-        impl From<$from> for $to {
-            fn from(value:$from) -> Self {
-                Self(value.0)
-            }
-        }
     };
 }
 
+macro_rules! boost {
+    ($fn:ident, $op:ident) => {
+        #[allow(unused)]
+        pub fn $fn(self, active:impl Into<bool>, value:impl Into<Number>) -> Self {
+            if active.into() { Self(self.0.$op(value.into())) } else { self }
+        }
+    }
+}
+
+macro_rules! boost_type {
+    ($ty:ident) => {
+        impl $ty {
+            boost!(add_boost, add);
+            boost!(mul_boost, mul);
+            boost!(pow_boost, bitxor);
+        }
+    }
+}
+
 num_type!(Quantity);
-boost_type!(AddBoost, ZERO);
-boost_type!(MulBoost, ONE);
-boost_type!(PowBoost, ONE);
-final_type!(RateOfChange);
+
+num_type!(RateOfChange, ZERO);
+num_type!(Cost, ZERO);
+num_type!(Gain, ZERO);
+
+boost_type!(RateOfChange);
+boost_type!(Cost);
+boost_type!(Gain);
+
 final_type!(Cost);
-final_type!(DiscreteBoost);
+final_type!(Gain);
 
 symm_comparison!(Quantity, Cost);
 
 impl Quantity { #[allow(unused)] pub const ZERO:Quantity = Quantity(Number::ZERO); }
 
-operation!(Mul: AddBoost [mul] Number => MulBoost);
-operation!(Mul: MulBoost [mul] Number => MulBoost);
-operation!(Mul: PowBoost [mul] Number => PowBoost);
-
-operation!(Add: AddBoost [add] AddBoost => AddBoost);
-operation!(Mul: AddBoost [mul] MulBoost => MulBoost);
-operation!(Mul: MulBoost [mul] MulBoost => MulBoost);
-operation!(BitXor: MulBoost [bitxor] PowBoost => PowBoost);
-operation!(BitXor: PowBoost [bitxor] PowBoost => PowBoost);
-
-operation!(Mul: AddBoost [mul] Duration => RateOfChange with |a,b| RateOfChange(a.0 * Number::from(b.as_secs_f64())) );
-operation!(Mul: MulBoost [mul] Duration => RateOfChange with |a,b| RateOfChange(a.0 * Number::from(b.as_secs_f64())) );
-operation!(Mul: PowBoost [mul] Duration => RateOfChange with |a,b| RateOfChange(a.0 * Number::from(b.as_secs_f64())) );
-
-convert!(AddBoost => DiscreteBoost);
-convert!(MulBoost => DiscreteBoost);
-convert!(PowBoost => DiscreteBoost);
+operation!(Mul: RateOfChange [mul] Duration => Gain with |a,b| Gain(a.0 * Number::from(b.as_secs_f64())) );
 
