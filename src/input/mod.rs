@@ -4,33 +4,39 @@ use educe::Educe;
 use vello::kurbo::Vec2;
 use winit::{event::{ElementState, KeyEvent, MouseButton}, keyboard::{KeyCode, PhysicalKey}};
 
-use crate::{game::GameState, window::Window};
+use crate::{game::GameState, grid::GridPoint, hover, window::Window};
 use crate::render::camera::{Camera, ScreenPoint};
 use crate::state::State;
 
 mod state;
-
-pub mod button;
-pub mod upgrade;
+mod components;
 
 pub use state::InputState;
+pub use components::{button, upgrade};
 
 #[derive(Educe)]
 #[educe(Default)]
 pub struct UserState {
     pub mouse_position: ScreenPoint,
+    #[educe(Default=GridPoint::ZERO)]
+    pub mouse_grid_point: GridPoint,
     pub camera_drag: bool,
     pub held_keys: HashSet<KeyCode>,
 }
 
 pub fn mouse_moved(to:ScreenPoint, state:&mut State) {
-    let distance = to.to_vec2() - state.input_state.user_state.mouse_position.to_vec2();
-    let user_state = &mut state.input_state.user_state;
-    user_state.mouse_position = to;
-    if user_state.camera_drag { state.render_state.camera.drag_input(distance); }
+    let from = state.input_state.user_state.mouse_position;
+    let from_grid = state.input_state.user_state.mouse_grid_point;
+    let to_grid =  GridPoint::nearest(state.render_state.camera.to_world(to));
+    let distance = to.to_vec2() - from.to_vec2();
+    state.input_state.user_state.mouse_position = to;
+    state.input_state.user_state.mouse_grid_point = to_grid;
+    if state.input_state.user_state.camera_drag { state.render_state.camera.drag_input(distance); }
+    crate::hover::mouse_moved(from_grid, to_grid, state);
 }
 
 pub fn mouse_input(button_state:ElementState, mouse_button:MouseButton, state:&mut State) {
+    hover::mouse_input(button_state, mouse_button, state);
     let response = state.input_state.mouse_input(button_state, mouse_button, &state.render_state.camera, &mut state.game_state);
 
     let user_state = &mut state.input_state.user_state;
@@ -63,7 +69,6 @@ pub fn keyboard_input(event:KeyEvent, state:&mut State, window:&Window) {
             held_keys.remove(&key);
         }
     }
-
 }
 
 impl UserState {
@@ -102,21 +107,32 @@ impl BitOrAssign for MouseInputResponse {
     }
 }
 
+pub struct UpdateContext<'a> {
+    user_state: &'a UserState,
+    game_state: &'a GameState,
+    #[expect(unused)]
+    camera: &'a Camera,
+}
+
+pub struct MouseInputContext<'a> {
+    button_state:ElementState,
+    mouse_button:MouseButton,
+    user_state:&'a UserState,
+    #[expect(unused)]
+    camera:&'a Camera,
+    game_state:&'a mut GameState
+}
+
 pub trait Inputable {
     type NewArgs;
     #[must_use]
-    fn new(id:usize, args:Self::NewArgs) -> Self;
+    fn new(args:Self::NewArgs) -> Self;
 
-    fn update(&mut self, user_state:&UserState, game_state:&GameState, camera:&Camera) {
-        let _ = user_state;
-        let _ = game_state;
-        let _ = camera;
+    fn update(&mut self, ctx:&mut UpdateContext) {
+        _ = ctx;
     }
 
     #[must_use]
-    fn mouse_input(
-        &mut self, button_state:ElementState, mouse_button:MouseButton,
-        user_state:&UserState, camera:&Camera, game_state:&mut GameState
-    ) -> MouseInputResponse;
+    fn mouse_input(&mut self, ctx:&mut MouseInputContext) -> MouseInputResponse;
 }
 

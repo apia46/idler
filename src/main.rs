@@ -18,6 +18,8 @@ mod render;
 mod input;
 mod game;
 
+mod hover;
+
 struct Game {
     window: Window,
     renderer: Renderer,

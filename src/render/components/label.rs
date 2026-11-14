@@ -2,23 +2,27 @@ use macros::parse_color;
 use vello::{kurbo::Point, peniko::Color};
 
 use crate::game::GameState;
-use crate::input::InputState;
+use crate::render::UpdateContext;
 use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer};
+use crate::state::label::LabelKey;
 
 const FONT_SIZE:f32 = 16.;
 const TEXT_COLOR:Color = parse_color!("#ffffff");
 
 pub struct Label {
     #[expect(unused)]
-    id: usize,
+    key: LabelKey,
     position: Point,
     text_fn: fn(&GameState) -> String,
     layout: TextLayout,
 }
 
-pub struct NewLabelArgs {
+pub struct NewLabelArgs<'a> {
+    pub key: LabelKey,
     pub position: Point,
     pub text: fn(&GameState) -> String,
+    pub renderer:&'a mut Renderer,
+    pub state:&'a GameState,
 }
 
 #[must_use]
@@ -26,17 +30,17 @@ fn build_text(renderer:&mut Renderer, text:&str) -> TextLayout {
     renderer.build_text(BuildTextArgs { text, font_size: FONT_SIZE, color: TEXT_COLOR, center: false })
 }
 
-impl Renderable for Label {
-    type NewArgs = NewLabelArgs;
-     fn new(id:usize, args:NewLabelArgs, renderer:&mut Renderer, state:&GameState) -> Self {
-        let NewLabelArgs { position, text:text_fn } = args;
+impl<'a> Renderable<'a> for Label {
+    type NewArgs = NewLabelArgs<'a>;
+     fn new(args:NewLabelArgs) -> Self {
+        let NewLabelArgs { key, position, text:text_fn, renderer, state } = args;
         let text = &(args.text)(state);
-        Label { id, position, text_fn, layout: build_text(renderer, text) }
+        Label { key, position, text_fn, layout: build_text(renderer, text) }
     }
 
-    fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, _input_state:&InputState) {
-        let text = &(self.text_fn)(game_state);
-        self.layout = build_text(renderer, text);
+    fn update(&mut self, ctx:&mut UpdateContext) {
+        let text = &(self.text_fn)(ctx.game_state);
+        self.layout = build_text(ctx.renderer, text);
     }
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {

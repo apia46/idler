@@ -8,6 +8,8 @@ use crate::render::{Renderer, resource::{ResourceTree as RenderResourceTree, New
 use crate::state::upgrade::NewUpgradeArgs as NewInternalUpgradeArgs;
 use crate::state::{State, button::NewButtonArgs};
 
+super::new_key!(ResourceKey);
+
 pub struct NewResourceArgs {
     pub reference: Reference<Quantity>,
     pub name: &'static str,
@@ -116,16 +118,16 @@ impl ResourceBuilder {
     pub fn build(self, state:&mut State, renderer:&mut Renderer) {
         state.new_button(self.start_button, renderer);
 
-        let count = &mut state.entities.resources;
-
-        state.render_state.resource_trees.push(RenderResourceTree::new(*count, NewRenderResourceTreeArgs {
-            reference: self.reference,
-            segments: self.segments.iter().map(|s| s.build_render()).collect(),
-            fill_color: self.fill_color,
-            back_color: self.back_color,
-            border_color: self.border_color,
-        }, renderer, &state.game_state));
-        *count += 1;
+        state.entities.resources.add(|key| {
+            state.render_state.resource_trees.insert(key, RenderResourceTree::new(NewRenderResourceTreeArgs {
+                key,
+                reference: self.reference,
+                segments: self.segments.iter().map(|s| s.build_render()).collect(),
+                fill_color: self.fill_color,
+                back_color: self.back_color,
+                border_color: self.border_color,
+            }));
+        });
 
         for upgrade_args in self.upgrades {
             state.new_upgrade(upgrade_args, renderer);

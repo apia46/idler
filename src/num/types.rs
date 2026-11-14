@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::{Add, AddAssign, Mul, Sub, SubAssign, BitXor}, cmp::Ordering, time::Duration};
+use std::{fmt::Display, ops::{Add, AddAssign, Mul, Sub, SubAssign, BitXor}, cmp::Ordering};
 
 use crate::num::Number;
 
@@ -233,5 +233,5 @@ symm_comparison!(Quantity, Cost);
 
 impl Quantity { #[allow(unused)] pub const ZERO:Quantity = Quantity(Number::ZERO); }
 
-operation!(Mul: RateOfChange [mul] Duration => Gain with |a,b| Gain(a.0 * Number::from(b.as_secs_f64())) );
+operation!(Mul: RateOfChange [mul] f64 => Gain with |a,b| Gain(a.0 * Number::from(b)) );
 

@@ -75,25 +75,25 @@ impl ApplicationHandler for AppHandler {
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
         let Some(game) = &mut self.game else { return; };
 
-        if let Some(dt) = tick(&game.state.start_time, &mut game.state.previous_tick, &Duration::from_millis(50)) {
-            game.state.update(&mut game.renderer, dt);
+        if let Some(delta_time) = tick(&game.state.start_time, &mut game.state.previous_tick, &Duration::from_millis(50)) {
+            game.state.update(&mut game.renderer, delta_time);
         }
 
         let renderer_state = &mut game.state.render_state.renderer_state;
-        if let Some(dt) = tick(&game.state.start_time, &mut renderer_state.previous_frame, &renderer_state.refresh_rate) {
-            game.state.render_state.renderer_state.delta_time = dt;
-            game.state.process(&mut game.renderer, dt);
+        if let Some(delta_time) = tick(&game.state.start_time, &mut renderer_state.previous_frame, &renderer_state.refresh_rate) {
+            game.state.render_state.renderer_state.delta_time = delta_time;
+            game.state.process(&mut game.renderer, delta_time);
             game.window.request_redraw();
         }
     }
 }
 
-fn tick(start:&Instant, previous:&mut Duration, length:&Duration) -> Option<Duration> {
+fn tick(start:&Instant, previous:&mut Duration, length:&Duration) -> Option<f64> {
     let current = start.elapsed();
     let delta_time = current - *previous;
     if delta_time >= *length {
         *previous = current;
-        Some(delta_time)
+        Some(delta_time.as_secs_f64())
     } else { None }
 }
 

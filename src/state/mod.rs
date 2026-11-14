@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 use educe::Educe;
 
-use crate::{game::GameState, input::InputState, render::{RenderState, Renderer}};
+use crate::{game::GameState, hover, input::InputState, render::{RenderState, Renderer}};
 
 pub mod button;
 pub mod label;
@@ -23,22 +23,43 @@ pub struct State {
 
 #[derive(Default)]
 pub struct Entities {
-    pub buttons: usize,
+    pub buttons: keys::ButtonKey,
     #[expect(unused)]
-    pub labels: usize,
-    pub resources: usize,
-    pub upgrades: usize,
+    pub labels: keys::LabelKey,
+    pub resources: keys::ResourceKey,
+    pub upgrades: keys::UpgradeKey,
 }
 
 impl State {
-    pub fn update(&mut self, renderer:&mut Renderer, dt:Duration) {
-        self.game_state.update(dt);
+    pub fn update(&mut self, renderer:&mut Renderer, delta_time:f64) {
+        self.game_state.update(delta_time);
         self.input_state.update(&self.game_state, &self.render_state.camera);
+        hover::update(self);
         renderer.update(&mut self.render_state, &self.game_state, &self.input_state);
     }
 
-    pub fn process(&mut self, renderer:&mut Renderer, dt:Duration) {
-        renderer.process(&mut self.render_state, &self.input_state, dt);
+    pub fn process(&mut self, renderer:&mut Renderer, delta_time:f64) {
+        renderer.process(&mut self.render_state, &self.input_state, delta_time);
     }
+}
+
+macro_rules! new_key {
+    ($name:ident) => {
+        #[derive(PartialEq, Eq, Hash, Clone, Copy, Default)]
+        pub struct $name(usize);
+
+        impl $name {
+            #[allow(unused)]
+            pub fn add(&mut self, func:impl FnOnce($name)) {
+                func(*self);
+                self.0 += 1;
+            }
+        }
+    };
+}
+use new_key;
+
+pub mod keys {
+    pub use crate::state::{button::ButtonKey, label::LabelKey, resource::ResourceKey,  upgrade::UpgradeKey};
 }
 

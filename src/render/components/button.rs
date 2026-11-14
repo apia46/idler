@@ -3,9 +3,11 @@ use vello::peniko::Color;
 
 use crate::game::GameState;
 use crate::grid::GridPoint;
-use crate::input::{InputState, button::InteractState};
+use crate::input::button::InteractState;
+use crate::render::UpdateContext;
 use crate::render::draw::{DrawHexagonArgs, Style};
 use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer};
+use crate::state::button::ButtonKey;
 
 const FONT_SIZE:f32 = 12.;
 const TEXT_COLOR:Color = parse_color!("#ffffff");
@@ -17,16 +19,19 @@ const DISABLED_TEXT_COLOR:Color = parse_color!("#999999");
 const BORDER_COLOR:Color = parse_color!("#444444");
 
 pub struct Button {
-    id: usize,
+    key: ButtonKey,
     position: GridPoint,
     text_fn: fn(&GameState) -> String,
     layout: TextLayout,
     bg_color: Color,
 }
 
-pub struct NewButtonArgs {
+pub struct NewButtonArgs<'a> {
+    pub key: ButtonKey,
     pub position: GridPoint,
     pub text: fn(&GameState) -> String,
+    pub renderer:&'a mut Renderer,
+    pub state:&'a GameState,
 }
 
 #[must_use]
@@ -38,28 +43,28 @@ fn build_text(renderer:&mut Renderer, text:&str, state:InteractState) -> TextLay
     })
 }
 
-impl Renderable for Button {
-    type NewArgs = NewButtonArgs;
-    fn new(id:usize, args:NewButtonArgs, renderer:&mut Renderer, state:&GameState) -> Self {
-        let NewButtonArgs { position, text:text_fn } = args;
+impl<'a> Renderable<'a> for Button {
+    type NewArgs = NewButtonArgs<'a>;
+    fn new(args:NewButtonArgs) -> Self {
+        let NewButtonArgs { key, position, text:text_fn, renderer, state } = args;
         let text = &(args.text)(state);
         Button {
-            id, position, text_fn,
+            key, position, text_fn,
             layout: build_text(renderer, text, InteractState::None),
             bg_color: BG_COLOR,
         }
     }
 
-    fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, input_state:&InputState) {
-        let text = &(self.text_fn)(game_state);
-        let interact_state = input_state.buttons[self.id].state();
+    fn update(&mut self, ctx:&mut UpdateContext) {
+        let text = &(self.text_fn)(ctx.game_state);
+        let interact_state = ctx.input_state.buttons[&self.key].state();
         self.bg_color = match interact_state {
             InteractState::None => BG_COLOR,
             InteractState::Hovered => HOVERED_COLOR,
             InteractState::Pressed => PRESSED_COLOR,
             InteractState::Disabled => DISABLED_COLOR,
         };
-        self.layout = build_text(renderer, text, interact_state);
+        self.layout = build_text(ctx.renderer, text, interact_state);
     }
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {

@@ -3,10 +3,11 @@ use vello::peniko::Color;
 
 use crate::game::{GameState, Reference, Upgrade as GameUpgrade};
 use crate::grid::GridPoint;
-use crate::input::{InputState, button::InteractState};
+use crate::input::button::InteractState;
 use crate::num::Cost;
 use crate::render::draw::{DrawHexagonArgs, Style};
-use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer};
+use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer, UpdateContext};
+use crate::state::upgrade::UpgradeKey;
 
 const FONT_SIZE:f32 = 12.;
 const BORDER_COLOR:Color = parse_color!("#444444");
@@ -25,7 +26,7 @@ const PURCHASED_TEXT_COLOR:Color = parse_color!("#5f5529");
 const PURCHASED_BG_COLOR:Color = parse_color!("#e5d36f");
 
 pub struct Upgrade {
-    id: usize,
+    key: UpgradeKey,
     position: GridPoint,
     resource_name: &'static str,
     description: fn(&GameState) -> String,
@@ -35,12 +36,15 @@ pub struct Upgrade {
     bg_color: Color,
 }
 
-pub struct NewUpgradeArgs {
+pub struct NewUpgradeArgs<'a> {
+    pub key: UpgradeKey,
     pub position: GridPoint,
     pub resource_name: &'static str,
     pub description: fn(&GameState) -> String,
     pub cost: Cost,
     pub reference: Reference<GameUpgrade>,
+    pub renderer:&'a mut Renderer,
+    pub state:&'a GameState,
 }
 
 #[must_use]
@@ -54,21 +58,21 @@ fn build_text(game_state:&GameState, renderer:&mut Renderer, reference:Reference
     })
 }
 
-impl Renderable for Upgrade {
-    type NewArgs = NewUpgradeArgs;
-    fn new(id:usize, args:NewUpgradeArgs, renderer:&mut Renderer, state:&GameState) -> Self {
-        let NewUpgradeArgs { position, resource_name, description, cost, reference } = args;
+impl<'a> Renderable<'a> for Upgrade {
+    type NewArgs = NewUpgradeArgs<'a>;
+    fn new(args:NewUpgradeArgs<'a>) -> Self {
+        let NewUpgradeArgs { key, position, resource_name, description, cost, reference, renderer, state } = args;
         let layout = build_text(state, renderer, reference, resource_name, (description)(state), cost, InteractState::Disabled);
 
         Upgrade {
-            id, position, resource_name, description, cost, reference,
+            key, position, resource_name, description, cost, reference,
             layout, bg_color: BG_COLOR,
         }
     }
 
-    fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, input_state:&InputState) {
-        let interact_state = input_state.upgrades[self.id].state();
-        self.bg_color = if game_state.fetch(self.reference).purchased { PURCHASED_BG_COLOR }
+    fn update(&mut self, ctx:&mut UpdateContext) {
+        let interact_state = ctx.input_state.upgrades[&self.key].state();
+        self.bg_color = if ctx.game_state.fetch(self.reference).purchased { PURCHASED_BG_COLOR }
         else {
             match interact_state {
                 InteractState::None => BG_COLOR,
@@ -77,7 +81,7 @@ impl Renderable for Upgrade {
                 InteractState::Disabled => DISABLED_COLOR,
             }
         };
-        self.layout = build_text(game_state, renderer, self.reference, self.resource_name, (self.description)(game_state), self.cost, interact_state);
+        self.layout = build_text(ctx.game_state, ctx.renderer, self.reference, self.resource_name, (self.description)(ctx.game_state), self.cost, interact_state);
     }
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {

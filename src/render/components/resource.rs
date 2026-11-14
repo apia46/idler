@@ -1,18 +1,17 @@
 use vello::kurbo::Point;
 use vello::peniko::Color;
 
-use crate::game::{GameState, Reference};
+use crate::game::Reference;
 use crate::grid::{Direction, GridPoint};
 use crate::num::{Number, Quantity};
 
-use crate::render::{Renderer, Renderable, camera::Camera};
+use crate::render::{UpdateContext, Renderer, Renderable, camera::Camera, draw::DrawLineArgs};
+use crate::state::resource::ResourceKey;
 use crate::util::Lerp;
-
-use super::draw::DrawLineArgs;
 
 pub struct ResourceTree {
     #[expect(unused)]
-    id: usize,
+    key: ResourceKey,
     reference: Reference<Quantity>,
     segments: Vec<Segment>,
     fill_color: Color,
@@ -30,6 +29,7 @@ struct Segment {
 }
 
 pub struct NewResourceTreeArgs {
+    pub key: ResourceKey,
     pub reference: Reference<Quantity>,
     pub segments: Vec<NewSegmentArgs>,
     pub fill_color: Color,
@@ -45,11 +45,11 @@ pub struct NewSegmentArgs {
     pub growth: Number,
 }
 
-impl Renderable for ResourceTree {
+impl<'a> Renderable<'a> for ResourceTree {
     type NewArgs = NewResourceTreeArgs;
-    fn new(id:usize, args:NewResourceTreeArgs, _renderer:&mut Renderer, _state:&GameState) -> Self {
+    fn new(args:NewResourceTreeArgs) -> Self {
         let NewResourceTreeArgs {
-            reference, segments:segment_args,
+            key, reference, segments:segment_args,
             fill_color, back_color, border_color
         } = args;
         let mut segments = Vec::with_capacity(segment_args.len());
@@ -60,11 +60,11 @@ impl Renderable for ResourceTree {
                 start, end, base, growth, progress: 0.,
             });
         }
-        ResourceTree { id, reference, segments, fill_color, back_color, border_color }
+        ResourceTree { key, reference, segments, fill_color, back_color, border_color }
     }
 
-    fn update(&mut self, _renderer:&mut Renderer, game_state:&GameState, _input_state:&crate::input::InputState) {
-        let resource = game_state.fetch(self.reference).to_number();
+    fn update(&mut self, ctx:&mut UpdateContext) {
+        let resource = ctx.game_state.fetch(self.reference).to_number();
         for segment in &mut self.segments {
             segment.progress = (resource / segment.base.to_number()).logf(segment.growth).clamp(0., 1.);
         }

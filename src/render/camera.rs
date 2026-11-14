@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use educe::Educe;
 use vello::kurbo::{Affine, Point, Vec2};
 
@@ -72,7 +70,7 @@ impl Camera {
     }
 
     fn default_pos(&self, window:&Window) -> Point {
-        (window.size.to_vec2() * -0.5 / self.scale).to_point()
+        (window.size.to_vec2() * -0.5).to_point()
     }
 
     pub fn go_to_default_pos(&mut self, window:&Window) {
@@ -80,15 +78,14 @@ impl Camera {
         self.pos = self.default_pos(window);
     }
 
-    pub fn process(&mut self, user_state:&UserState, dt:Duration) {
-        let dt = dt.as_secs_f64();
-        let adjusted_decay = VELOCITY_DECAY.powf(dt);
+    pub fn process(&mut self, user_state:&UserState, delta_time:f64) {
+        let adjusted_decay = VELOCITY_DECAY.powf(delta_time);
 
         if user_state.keyboard_input_direction() != Vec2::ZERO { self.cancel_homing(); };
 
         match &mut self.state {
             CameraState::Normal(state) => {
-                state.velocity += user_state.keyboard_input_direction() * CAMERA_SPEED * self.scale * dt;
+                state.velocity += user_state.keyboard_input_direction() * CAMERA_SPEED * self.scale * delta_time;
                 let new_scale = (1.-adjusted_decay).lerp(self.scale, state.target_scale);
                 // zoom correction: the mouse should be at the same world position before and after the zoom
                 // mouse * scale_i + pos_i = mouse * scale_f + pos_f
@@ -96,7 +93,7 @@ impl Camera {
                 // zoom_correction = mouse * (scale_i-scale_f)
                 let zoom_correction = state.zoom_point.to_vec2() * (self.scale - new_scale);
                 state.velocity *= adjusted_decay;
-                self.pos += state.velocity * dt + zoom_correction;
+                self.pos += state.velocity * delta_time + zoom_correction;
                 self.scale = new_scale;
             },
             CameraState::Homing(state) => {

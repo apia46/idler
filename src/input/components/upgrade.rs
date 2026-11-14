@@ -2,14 +2,14 @@ use winit::event::{ElementState, MouseButton};
 
 use crate::game::{GameState, Reference, Upgrade as GameUpgrade};
 use crate::grid::GridPoint;
-use crate::input::button::InteractState;
-use crate::input::{Inputable, MouseInputResponse, UserState};
+use crate::input::button::{self, InteractState};
+use crate::input::{Inputable, MouseInputContext, MouseInputResponse, UpdateContext};
 use crate::num::{Cost, Quantity};
-use crate::render::camera::Camera;
+use crate::state::upgrade::UpgradeKey;
 
 pub struct Upgrade {
     #[expect(unused)]
-    id: usize,
+    key: UpgradeKey,
     position: GridPoint,
     state: InteractState,
     reference: Reference<GameUpgrade>,
@@ -18,6 +18,7 @@ pub struct Upgrade {
 }
 
 pub struct NewUpgradeArgs {
+    pub key: UpgradeKey,
     pub position: GridPoint,
     pub reference: Reference<GameUpgrade>,
     pub resource_reference: Reference<Quantity>,
@@ -41,37 +42,25 @@ impl Upgrade {
 
 impl Inputable for Upgrade {
     type NewArgs = NewUpgradeArgs;
-    fn new(id: usize, args: NewUpgradeArgs) -> Self {
-        let NewUpgradeArgs { position, reference, resource_reference, cost } = args;
-        Upgrade { id, position, state: InteractState::Disabled, reference, resource_reference, cost }
+    fn new(args: NewUpgradeArgs) -> Self {
+        let NewUpgradeArgs { key, position, reference, resource_reference, cost } = args;
+        Upgrade { key, position, state: InteractState::Disabled, reference, resource_reference, cost }
     }
 
-    fn update(&mut self, user_state:&UserState, game_state:&GameState, camera:&Camera) {
-        self.state = if self.disable(game_state) {
-            InteractState::Disabled
-        } else {
-            match (self.state, GridPoint::nearest(camera.to_world(user_state.mouse_position)) == self.position) {
-                (InteractState::None | InteractState::Disabled, true) => InteractState::Hovered,
-                (_, false) => InteractState::None,
-                (state, _) => state,
-            }
-        }
+    fn update(&mut self, ctx:&mut UpdateContext) {
+        self.state = button::next_state(self.state, self.position, ctx.user_state, self.disable(ctx.game_state));
     }
 
-    fn mouse_input(
-        &mut self, button_state:ElementState, mouse_button:MouseButton,
-        user_state:&UserState, camera:&Camera, game_state:&mut GameState
-    ) -> MouseInputResponse {
+    fn mouse_input(&mut self, ctx:&mut MouseInputContext) -> MouseInputResponse {
         let hovered = matches!(self.state, InteractState::Hovered | InteractState::Pressed);
-        if !matches!(mouse_button, MouseButton::Left) { return MouseInputResponse { hovered, consumed: false }; };
-        let consumed = match (self.state, button_state) {
+        if !matches!(ctx.mouse_button, MouseButton::Left) { return MouseInputResponse { hovered, consumed: false }; };
+        let consumed = match (self.state, ctx.button_state) {
             (InteractState::Hovered, ElementState::Pressed) => {
                 self.state = InteractState::Pressed; true
             }
             (InteractState::Pressed, ElementState::Released) => {
-                self.effect(game_state);
-                self.state = InteractState::None;
-                self.update(user_state, game_state, camera);
+                self.effect(ctx.game_state);
+                self.state = button::next_state(InteractState::None, self.position, ctx.user_state, self.disable(ctx.game_state));
                 true
             },
             _ => false,

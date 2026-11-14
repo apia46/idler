@@ -4,6 +4,8 @@ use crate::input::{Inputable, button::{Button as InputButton, NewButtonArgs as N
 use crate::render::{Renderer, Renderable, button::{Button as RenderButton, NewButtonArgs as NewRenderButtonArgs}};
 use crate::state::State;
 
+super::new_key!(ButtonKey);
+
 #[derive(Clone, Copy)]
 pub struct NewButtonArgs {
     pub position: GridPoint,
@@ -15,10 +17,10 @@ pub struct NewButtonArgs {
 impl State {
     pub fn new_button(&mut self, args:NewButtonArgs, renderer:&mut Renderer) {
         let NewButtonArgs { position, text, enabled, pressed } = args;
-        let count = &mut self.entities.buttons;
-        self.input_state.buttons.push(InputButton::new(*count, NewInputButtonArgs { position, enabled, pressed }));
-        self.render_state.buttons.push(RenderButton::new(*count, NewRenderButtonArgs { position, text }, renderer, &self.game_state));
-        *count += 1;
+        self.entities.buttons.add(|key| {
+            self.input_state.buttons.insert(key, InputButton::new(NewInputButtonArgs { key, position, enabled, pressed }));
+            self.render_state.buttons.insert(key, RenderButton::new(NewRenderButtonArgs { key, position, text, renderer, state: &self.game_state }));
+        });
     }
 }
 

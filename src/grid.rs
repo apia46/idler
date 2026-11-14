@@ -12,7 +12,7 @@ const MATRIX:Affine = Affine::new([
     I_HAT.x, I_HAT.y, J_HAT.x, J_HAT.y, 0., 0.,
 ]);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GridPoint {
     x: i32,
     y: i32,
@@ -23,8 +23,10 @@ pub struct GridPoint {
 pub enum Direction { UP, RUP, ROWN, DOWN, LOWN, LUP }
 
 impl GridPoint {
+    pub const ZERO:GridPoint = GridPoint::new(0, 0);
+
     #[must_use]
-    pub fn new(x:i32, y:i32) -> GridPoint {
+    pub const fn new(x:i32, y:i32) -> GridPoint {
         GridPoint { x, y }
     }
 

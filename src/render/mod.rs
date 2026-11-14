@@ -14,13 +14,10 @@ use crate::input::InputState;
 mod state;
 mod draw;
 pub mod camera;
-
-pub mod button;
-pub mod label;
-pub mod resource;
-pub mod upgrade;
+mod components;
 
 pub use state::RenderState;
+pub use components::{button, hover, label, resource, upgrade};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ColorBrush(Color);
@@ -48,18 +45,19 @@ pub struct Renderer {
 #[educe(Default)]
 pub struct RendererState {
     pub previous_frame: Duration,
-    pub delta_time: Duration,
+    pub delta_time: f64,
     #[educe(Default=Duration::from_secs_f64(1./60.))]
     pub refresh_rate: Duration,
 }
 
 impl Renderer {
     pub fn update(&mut self, render_state: &mut RenderState, game_state:&GameState, input_state:&InputState) {
-        render_state.update(self, game_state, input_state);
+        render_state.update(&mut UpdateContext { renderer: self, game_state, input_state });
     }
 
-    pub fn process(&mut self, render_state: &mut RenderState, input_state:&InputState, dt:Duration) {
-        render_state.camera.process(&input_state.user_state, dt);
+    pub fn process(&mut self, render_state: &mut RenderState, input_state:&InputState, delta_time:f64) {
+        render_state.camera.process(&input_state.user_state, delta_time);
+        render_state.process(&mut ProcessContext { delta_time });
     }
 
     #[must_use]
@@ -70,15 +68,27 @@ impl Renderer {
     }
 }
 
-pub trait Renderable {
+pub struct UpdateContext<'a> {
+    renderer: &'a mut Renderer,
+    game_state: &'a GameState,
+    input_state: &'a InputState,
+}
+
+pub struct ProcessContext {
+    delta_time: f64,
+}
+
+pub trait Renderable<'a> {
     type NewArgs;
     #[must_use]
-    fn new(id:usize, args:Self::NewArgs, renderer:&mut Renderer, state:&GameState) -> Self;
+    fn new(args:Self::NewArgs) -> Self;
 
-    fn update(&mut self, renderer:&mut Renderer, game_state:&GameState, input_state:&InputState) {
-        let _ = renderer;
-        let _ = game_state;
-        let _ = input_state;
+    fn update(&mut self, ctx:&mut UpdateContext) {
+        _ = ctx;
+    }
+
+    fn process(&mut self, ctx:&mut ProcessContext) {
+        _ = ctx;
     }
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera);

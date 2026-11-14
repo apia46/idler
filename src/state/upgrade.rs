@@ -5,6 +5,8 @@ use crate::render::{Renderable, Renderer, upgrade::{Upgrade as RenderUpgrade, Ne
 use crate::num::{Cost, Quantity};
 use crate::state::State;
 
+super::new_key!(UpgradeKey);
+
 pub struct NewUpgradeArgs {
     pub position: GridPoint,
     pub description: fn(&GameState) -> String,
@@ -17,9 +19,9 @@ pub struct NewUpgradeArgs {
 impl State {
     pub fn new_upgrade(&mut self, args:NewUpgradeArgs, renderer:&mut Renderer) {
         let NewUpgradeArgs { position, description, cost, reference, resource_name, resource_reference } = args;
-        let count = &mut self.entities.upgrades;
-        self.render_state.upgrades.push(RenderUpgrade::new(*count, NewRenderUpgradeArgs { cost, resource_name, description, position, reference }, renderer, &self.game_state));
-        self.input_state.upgrades.push(InputUpgrade::new(*count, NewInputUpgradeArgs { cost, position, reference, resource_reference }));
-        *count += 1;
+        self.entities.upgrades.add(|key| {
+            self.render_state.upgrades.insert(key, RenderUpgrade::new(NewRenderUpgradeArgs { key, cost, resource_name, description, position, reference, renderer, state: &self.game_state }));
+            self.input_state.upgrades.insert(key, InputUpgrade::new(NewInputUpgradeArgs { key, cost, position, reference, resource_reference }));
+        });
     }
 }

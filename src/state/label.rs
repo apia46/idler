@@ -5,6 +5,8 @@ use crate::render::Renderer;
 use crate::render::{Renderable, label::{Label as RenderLabel, NewLabelArgs as NewRenderLabelArgs}};
 use crate::state::State;
 
+super::new_key!(LabelKey);
+
 pub struct NewLabelArgs {
     pub position: Point,
     pub text: fn(&GameState) -> String,
@@ -14,9 +16,9 @@ impl State {
     #[expect(unused)]
     pub fn new_label(&mut self, args:NewLabelArgs, renderer:&mut Renderer) {
         let NewLabelArgs { position, text } = args;
-        let count = &mut self.entities.labels;
-        self.render_state.labels.push(RenderLabel::new(*count, NewRenderLabelArgs { position, text }, renderer, &self.game_state));
-        *count += 1;
+        self.entities.labels.add(|key| {
+            self.render_state.labels.insert(key, RenderLabel::new( NewRenderLabelArgs { key, position, text, renderer, state: &self.game_state}));
+        });
     }
 }
 

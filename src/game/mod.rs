@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use educe::Educe;
 use macros::parse_color;
 
@@ -51,9 +49,9 @@ pub struct Upgrades {
 }
 
 impl GameState {
-    pub fn update(&mut self, dt:Duration) {
+    pub fn update(&mut self, delta_time:f64) {
         self.upgrades.click_2_boost = self.things_rate.to_number() / 4.into();
-        self.things += self.things_rate * dt;
+        self.things += self.things_rate * delta_time;
         self.things_per_click = Gain::ONE
             .add_boost(self.upgrades.click_1, 1)
             .add_boost(self.upgrades.click_2, self.upgrades.click_2_boost)

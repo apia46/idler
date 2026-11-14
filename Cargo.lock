@@ -981,6 +981,7 @@ dependencies = [
  "env_logger",
  "log",
  "macros",
+ "num-traits",
  "parlance",
  "parley",
  "pollster",

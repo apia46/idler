@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use winit::event::{ElementState, MouseButton};
 
-use crate::{game::GameState, input::{Inputable, MouseInputResponse, UserState, button::Button, upgrade::Upgrade}, render::camera::Camera};
+use crate::{game::GameState, input::{Inputable, MouseInputResponse, UserState, UpdateContext, MouseInputContext, button::Button, upgrade::Upgrade}, render::camera::Camera};
+use crate::state::keys::*;
 
 macro_rules! input_state {
     {
@@ -15,8 +18,12 @@ macro_rules! input_state {
         impl InputState {
             pub fn update(&mut self, state:&GameState, camera:&Camera) {
                 $(
-                    for inputable in &mut self.$name {
-                        Inputable::update(inputable, &self.user_state, state, camera);
+                    for inputable in self.$name.values_mut() {
+                        Inputable::update(inputable, &mut UpdateContext {
+                            game_state: state,
+                            user_state: &self.user_state,
+                            camera,
+                        });
                     }
                 )*
             }
@@ -24,8 +31,10 @@ macro_rules! input_state {
             pub fn mouse_input(&mut self, button_state:ElementState, mouse_button:MouseButton, camera:&Camera, game_state:&mut GameState) -> MouseInputResponse {
                 let mut response = MouseInputResponse::default();
                 $(
-                    for inputable in &mut self.$name {
-                        response |= inputable.mouse_input(button_state, mouse_button, &self.user_state, camera, game_state);
+                    for inputable in self.$name.values_mut() {
+                        response |= inputable.mouse_input(&mut MouseInputContext {
+                            button_state, mouse_button, user_state: &self.user_state, camera, game_state
+                        });
                         if response.consumed { break; }
                     }
                 )*
@@ -36,7 +45,7 @@ macro_rules! input_state {
 }
 
 input_state! {
-    buttons: Vec<Button>,
-    upgrades: Vec<Upgrade>,
+    buttons: HashMap<ButtonKey, Button>,
+    upgrades: HashMap<UpgradeKey, Upgrade>,
 }
 

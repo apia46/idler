@@ -16,4 +16,5 @@ skrifa = "0.49.0"
 vello = "0.11.0"
 wgpu = "30.0.1"
 winit = "0.30.13"
+num-traits = "0.2.19"
 
