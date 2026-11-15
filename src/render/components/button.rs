@@ -72,7 +72,7 @@ impl<'a> Renderable<'a> for Button {
             stroke: Some((6., BORDER_COLOR)), fill: Some(self.bg_color)
         };
         renderer.draw_hexagon(DrawHexagonArgs { point: self.position, style }, camera);
-        renderer.draw_text(self.position.to_point().to_vec2(), &self.layout, camera)
+        renderer.draw_text(self.position.to_point().to_vec2(), &self.layout, Some(camera))
     }
 }
 

@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 use educe::Educe;
 
-use crate::{game::GameState, hover, input::{self, InputState}, render::{RenderState, Renderer}};
+use crate::{game::GameState, hover::{self, HoverInfo}, input::{self, InputState}, render::{RenderState, Renderer}};
 
 pub mod button;
 pub mod label;
@@ -18,6 +18,7 @@ pub struct State {
     pub entities: Entities,
     pub input_state: InputState,
     pub render_state: RenderState,
+    pub hover_infos: Vec<HoverInfo>,
     pub game_state: GameState,
 }
 
@@ -33,7 +34,7 @@ pub struct Entities {
 impl State {
     pub fn update(&mut self, renderer:&mut Renderer, delta_time:f64) {
         self.game_state.update(delta_time);
-        self.input_state.update(&self.game_state, &self.render_state.camera);
+        self.input_state.update(&self.game_state);
         hover::update(self);
         renderer.update(&mut self.render_state, &self.game_state, &self.input_state);
     }

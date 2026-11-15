@@ -44,7 +44,7 @@ impl<'a> Renderable<'a> for Label {
     }
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {
-        renderer.draw_text(self.position.to_vec2(), &self.layout, camera);
+        renderer.draw_text(self.position.to_vec2(), &self.layout, Some(camera));
     }
 }
 

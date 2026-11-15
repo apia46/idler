@@ -55,8 +55,8 @@ impl<'a> Renderable<'a> for HoverTile {
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {
         let alpha = match self.state {
-            HoverTileState::Hover { age } => { age.remap((0., 0.3), (1., 0.5)) }
-            HoverTileState::Fading { age } => { age.remap((0., FADE_TIME), (0.5, 0.)) }
+            HoverTileState::Hover { age } => { age.remap((0., 0.5), (0.7, 0.3)) }
+            HoverTileState::Fading { age } => { age.remap((0., FADE_TIME), (0.3, 0.)) }
         };
         renderer.draw_hexagon(DrawHexagonArgs {
             point: self.position,

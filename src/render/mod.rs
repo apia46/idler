@@ -7,12 +7,12 @@ use vello::{Scene, peniko::{Color, Gradient, ImageBrush, ImageData}};
 
 pub const BG_COLOR:Color = parse_color!("#161e4e");
 
-use crate::{game::GameState, window::Window};
+use crate::{game::GameState, hover::HoverInfo, window::Window};
 use crate::render::camera::Camera;
 use crate::input::InputState;
 
 mod state;
-mod draw;
+pub mod draw;
 pub mod camera;
 pub mod grid;
 mod components;
@@ -62,10 +62,11 @@ impl Renderer {
     }
 
     #[must_use]
-    pub fn draw_scene(&mut self, state:&RenderState, window:&Window) -> &Scene {
+    pub fn draw_scene(&mut self, state:&RenderState, window:&Window, hovers:&Vec<HoverInfo>) -> &Scene {
         self.scene.reset();
         grid::draw(self, &state.camera, window);
         state.draw(self);
+        crate::hover::draw(self, hovers);
         &self.scene
     }
 }

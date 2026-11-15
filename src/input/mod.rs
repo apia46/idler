@@ -4,15 +4,15 @@ use educe::Educe;
 use vello::kurbo::Vec2;
 use winit::{event::{ElementState, KeyEvent, MouseButton}, keyboard::{KeyCode, PhysicalKey}};
 
-use crate::{game::GameState, grid::GridPoint, hover, window::Window};
-use crate::render::camera::{Camera, ScreenPoint};
+use crate::{game::GameState, grid::GridPoint, hover::{self, HoverInfo}, window::Window};
+use crate::render::camera::ScreenPoint;
 use crate::state::State;
 
 mod state;
 mod components;
 
 pub use state::InputState;
-pub use components::{button, upgrade};
+pub use components::{button, upgrade, resource};
 
 #[derive(Educe)]
 #[educe(Default)]
@@ -37,7 +37,7 @@ pub fn mouse_moved(to:ScreenPoint, state:&mut State) {
 
 pub fn mouse_input(button_state:ElementState, mouse_button:MouseButton, state:&mut State) {
     hover::mouse_input(button_state, mouse_button, state);
-    let response = state.input_state.mouse_input(button_state, mouse_button, &state.render_state.camera, &mut state.game_state);
+    let response = state.input_state.mouse_input(button_state, mouse_button, &mut state.game_state);
 
     let user_state = &mut state.input_state.user_state;
     user_state.camera_drag = match (button_state, mouse_button, response.hovered) {
@@ -110,17 +110,18 @@ impl BitOrAssign for MouseInputResponse {
 pub struct UpdateContext<'a> {
     user_state: &'a UserState,
     game_state: &'a GameState,
-    #[expect(unused)]
-    camera: &'a Camera,
 }
 
 pub struct MouseInputContext<'a> {
     button_state:ElementState,
     mouse_button:MouseButton,
     user_state:&'a UserState,
-    #[expect(unused)]
-    camera:&'a Camera,
     game_state:&'a mut GameState
+}
+
+pub struct HoverContext<'a> {
+    user_state:&'a UserState,
+    game_state:&'a GameState
 }
 
 pub trait Inputable {
@@ -132,7 +133,15 @@ pub trait Inputable {
         _ = ctx;
     }
 
+    fn hover(&self, ctx:&mut HoverContext) -> Option<HoverInfo> {
+        _ = ctx;
+        None
+    }
+
     #[must_use]
-    fn mouse_input(&mut self, ctx:&mut MouseInputContext) -> MouseInputResponse;
+    fn mouse_input(&mut self, ctx:&mut MouseInputContext) -> MouseInputResponse {
+        _ = ctx;
+        MouseInputResponse { hovered: false, consumed: false }
+    }
 }
 

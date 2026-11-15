@@ -41,6 +41,12 @@ pub struct TextLayout {
     layout: Layout<ColorBrush>, center: bool,
 }
 
+impl TextLayout {
+    pub fn height(&self) -> f32 {
+        self.layout.height()
+    }
+}
+
 impl Renderer {
     #[expect(unused)]
     pub fn draw_rect(&mut self, args:DrawRectArgs, camera:&Camera) {
@@ -78,7 +84,8 @@ impl Renderer {
         TextLayout { layout, center: args.center }
     }
 
-    pub fn draw_text(&mut self, position:Vec2, layout:&TextLayout, camera:&Camera) {
+    pub fn draw_text(&mut self, position:Vec2, layout:&TextLayout, camera:Option<&Camera>) {
+        let transform = if let Some(camera) = camera { camera.transform_inv() } else { Affine::IDENTITY };
         let mut translate = position;
         if layout.center {
             translate += Vec2::new(-0.5*layout.layout.full_width() as f64, -0.5*layout.layout.height() as f64)
@@ -93,7 +100,7 @@ impl Renderer {
                         self.scene.draw_glyphs(run.font())
                             .font_size(run.font_size())
                             .normalized_coords(coords)
-                            .transform(camera.transform_inv().pre_translate(translate))
+                            .transform(transform.pre_translate(translate))
                             .brush(glyph_run.style().brush)
                             .draw(KurboFill::NonZero, glyph_run.positioned_glyphs().map(|g| {
                                 vello::Glyph { id: g.id, x: g.x, y: g.y }

@@ -3,7 +3,7 @@ use std::ops::Sub;
 use vello::kurbo::{Point, Vec2};
 
 #[derive(Default, Clone, Copy)]
-pub struct ScreenPoint(pub(super) Point);
+pub struct ScreenPoint(pub Point);
 
 impl ScreenPoint {
     #[must_use]
@@ -18,7 +18,7 @@ impl ScreenPoint {
 }
 
 #[derive(Default, Clone, Copy)]
-pub struct ScreenVec2(pub(super) Vec2);
+pub struct ScreenVec2(pub Vec2);
 
 impl ScreenVec2 {
     #[must_use]

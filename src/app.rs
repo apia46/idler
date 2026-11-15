@@ -66,7 +66,7 @@ impl ApplicationHandler for AppHandler {
                 input::mouse_input(state, button, &mut game.state);
             },
             (WindowEvent::RedrawRequested, Some(game)) => {
-                game.window.render(|w| game.renderer.draw_scene(&game.state.render_state, w));
+                game.window.render(|w| game.renderer.draw_scene(&game.state.render_state, w, &game.state.hover_infos));
             },
             _ => {},
         }
