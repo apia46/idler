@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 use educe::Educe;
 
-use crate::{game::GameState, hover, input::InputState, render::{RenderState, Renderer}};
+use crate::{game::GameState, hover, input::{self, InputState}, render::{RenderState, Renderer}};
 
 pub mod button;
 pub mod label;
@@ -40,6 +40,9 @@ impl State {
 
     pub fn process(&mut self, renderer:&mut Renderer, delta_time:f64) {
         renderer.process(&mut self.render_state, &self.input_state, delta_time);
+        if self.render_state.camera.camera_moved {
+            input::mouse_moved(self.input_state.user_state.mouse_position, self);
+        }
     }
 }
 

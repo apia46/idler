@@ -28,6 +28,7 @@ pub struct Camera {
     state: CameraState,
     #[educe(Default=1)]
     scale: f64,
+    pub camera_moved: bool,
 }
 
 #[derive(Educe)]
@@ -83,6 +84,8 @@ impl Camera {
 
         if user_state.keyboard_input_direction() != Vec2::ZERO { self.cancel_homing(); };
 
+        let old_pos = self.pos;
+
         match &mut self.state {
             CameraState::Normal(state) => {
                 state.velocity += user_state.keyboard_input_direction() * CAMERA_SPEED * self.scale * delta_time;
@@ -106,6 +109,8 @@ impl Camera {
                 }
             },
         }
+
+        self.camera_moved = old_pos != self.pos;
     }
 
     fn cancel_homing(&mut self) -> Option<&mut NormalCameraState> {
