@@ -40,3 +40,19 @@ impl<T> Remap for T where T: Remapable {
 
 impl Remapable for f64 {}
 
+pub trait ComponentWise {
+    #[expect(unused)]
+    fn mul(self, value:Self) -> Self;
+    fn div(self, value:Self) -> Self;
+}
+
+impl ComponentWise for Vec2 {
+    fn mul(self, value:Self) -> Self {
+        Vec2::new(self.x * value.x, self.y * value.y)
+    }
+
+    fn div(self, value:Self) -> Self {
+        Vec2::new(self.x / value.x, self.y / value.y)
+    }
+}
+

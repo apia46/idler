@@ -27,7 +27,7 @@ pub struct UserState {
 pub fn mouse_moved(to:ScreenPoint, state:&mut State) {
     let from = state.input_state.user_state.mouse_position;
     let from_grid = state.input_state.user_state.mouse_grid_point;
-    let to_grid =  GridPoint::nearest(state.render_state.camera.to_world(to));
+    let to_grid =  GridPoint::nearest(state.render_state.camera.point_to_world(to));
     let distance = to.to_vec2() - from.to_vec2();
     state.input_state.user_state.mouse_position = to;
     state.input_state.user_state.mouse_grid_point = to_grid;

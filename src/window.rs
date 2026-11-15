@@ -4,7 +4,7 @@ use winit::{dpi::{PhysicalPosition, PhysicalSize}, event_loop::ActiveEventLoop};
 use winit::window::Window as WinitWindow;
 use std::{sync::Arc, time::Duration};
 
-use crate::render::camera::ScreenPoint;
+use crate::render::camera::{ScreenPoint, ScreenVec2};
 
 pub struct Window {
     window: Arc<WinitWindow>,
@@ -13,16 +13,15 @@ pub struct Window {
     renderer: Renderer,
     valid_surface: bool,
     inv_scale_factor: f64,
-    pub size: ScreenPoint,
+    pub size: ScreenVec2,
 }
 
-fn to_position(value:PhysicalSize<u32>) -> PhysicalPosition<f64> {
-    let PhysicalSize { width, height } = value;
-    PhysicalPosition { x: width as f64, y: height as f64 }
-}
-
-fn to_screen(inv_scale_factor:f64, from:PhysicalPosition<f64>) -> ScreenPoint {
+fn point_to_screen(inv_scale_factor:f64, from:PhysicalPosition<f64>) -> ScreenPoint {
     ScreenPoint::new((Vec2::new(from.x, from.y) * inv_scale_factor).to_point())
+}
+
+fn vec2_to_screen(inv_scale_factor:f64, from:PhysicalSize<u32>) -> ScreenVec2 {
+    ScreenVec2::new(Vec2::new(from.width as f64, from.height as f64) * inv_scale_factor)
 }
 
 impl Window {
@@ -35,12 +34,17 @@ impl Window {
         let surface = render_context.create_surface(window.clone(), size.width, size.height, wgpu::PresentMode::AutoVsync).await.unwrap();
         let renderer = Renderer::new(&render_context.devices[surface.dev_id].device, RendererOptions::default()).unwrap();
         let inv_scale_factor = 1./window.scale_factor();
-        Self { window, render_context, surface, renderer, valid_surface: true, inv_scale_factor, size: to_screen(inv_scale_factor, to_position(size)) }
+        Self { window, render_context, surface, renderer, valid_surface: true, inv_scale_factor, size: vec2_to_screen(inv_scale_factor, size) }
     }
 
     #[must_use]
-    pub fn to_screen(&self, from:PhysicalPosition<f64>) -> ScreenPoint {
-        to_screen(self.inv_scale_factor, from)
+    pub fn point_to_screen(&self, from:PhysicalPosition<f64>) -> ScreenPoint {
+        point_to_screen(self.inv_scale_factor, from)
+    }
+
+    #[must_use]
+    pub fn vec2_to_screen(&self, from:PhysicalSize<u32>) -> ScreenVec2 {
+        vec2_to_screen(self.inv_scale_factor, from)
     }
 
     pub fn update_scale_factor(&mut self, to:f64) {
@@ -58,7 +62,7 @@ impl Window {
     }
 
     pub fn resize(&mut self, size:PhysicalSize<u32>) {
-        self.size = self.to_screen(to_position(size));
+        self.size = self.vec2_to_screen(size);
         if size.width == 0 && size.height == 0 {
             self.valid_surface = false;
         } else {
@@ -67,14 +71,14 @@ impl Window {
         }
     }
 
-    pub fn render<'a>(&'a mut self, scene: impl FnOnce()->&'a Scene) {
+    pub fn render<'a>(&'a mut self, scene: impl FnOnce(&Self)->&'a Scene) {
         if !self.valid_surface { return; }
         let device_handle = &self.render_context.devices[self.surface.dev_id];
         self.renderer
             .render_to_texture(
                 &device_handle.device,
                 &device_handle.queue,
-                scene(),
+                scene(self),
                 &self.surface.target_view,
                 &vello::RenderParams {
                     base_color: crate::render::BG_COLOR,

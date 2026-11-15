@@ -12,6 +12,9 @@ const MATRIX:Affine = Affine::new([
     I_HAT.x, I_HAT.y, J_HAT.x, J_HAT.y, 0., 0.,
 ]);
 
+// of the equivalent rectangular brick
+pub const RECT_SIZE:Vec2 = Vec2::new(I_HAT.x, J_HAT.y);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GridPoint {
     x: i32,

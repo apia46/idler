@@ -5,15 +5,16 @@ use macros::parse_color;
 use parley::{FontContext, LayoutContext};
 use vello::{Scene, peniko::{Color, Gradient, ImageBrush, ImageData}};
 
-pub const BG_COLOR:Color = parse_color!("#224466");
+pub const BG_COLOR:Color = parse_color!("#161e4e");
 
-use crate::game::GameState;
+use crate::{game::GameState, window::Window};
 use crate::render::camera::Camera;
 use crate::input::InputState;
 
 mod state;
 mod draw;
 pub mod camera;
+pub mod grid;
 mod components;
 
 pub use state::RenderState;
@@ -61,8 +62,9 @@ impl Renderer {
     }
 
     #[must_use]
-    pub fn draw_scene(&mut self, state:&RenderState) -> &Scene {
+    pub fn draw_scene(&mut self, state:&RenderState, window:&Window) -> &Scene {
         self.scene.reset();
+        grid::draw(self, &state.camera, window);
         state.draw(self);
         &self.scene
     }

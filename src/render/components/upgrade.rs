@@ -86,7 +86,7 @@ impl<'a> Renderable<'a> for Upgrade {
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {
         let style = Style {
-            stroke: Some((4., BORDER_COLOR)), fill: Some(self.bg_color)
+            stroke: Some((6., BORDER_COLOR)), fill: Some(self.bg_color)
         };
         renderer.draw_hexagon(DrawHexagonArgs { point: self.position, style }, camera);
         renderer.draw_text(self.position.to_point().to_vec2(), &self.layout, camera)

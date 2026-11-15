@@ -60,7 +60,7 @@ impl<'a> Renderable<'a> for HoverTile {
         };
         renderer.draw_hexagon(DrawHexagonArgs {
             point: self.position,
-            style: Style { stroke: Some((4., COLOR.with_alpha(alpha as f32))), fill: None }
+            style: Style { stroke: Some((6., COLOR.with_alpha(alpha as f32))), fill: None }
         }, camera);
     }
 }

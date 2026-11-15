@@ -6,25 +6,14 @@ use crate::{input::UserState, util::Lerp, window::Window};
 const CAMERA_SPEED:f64 = 30000.;
 const VELOCITY_DECAY:f64 = 1.5e-6;
 
-#[derive(Default, Clone, Copy)]
-pub struct ScreenPoint(Point);
+mod types;
 
-impl ScreenPoint {
-    #[must_use]
-    pub fn new(point:impl Into<Point>) -> Self {
-        Self(point.into())
-    }
-
-    #[must_use]
-    pub fn to_vec2(self) -> Vec2 {
-        self.0.to_vec2()
-    }
-}
+pub use types::{ScreenPoint, ScreenVec2};
 
 #[derive(Educe)]
 #[educe(Default)]
 pub struct Camera {
-    pos: Point,
+    pub pos: Point,
     state: CameraState,
     #[educe(Default=1)]
     scale: f64,
@@ -56,8 +45,12 @@ struct HomingCameraState {
 
 impl Camera {
     #[must_use]
-    pub fn to_world(&self, value:ScreenPoint) -> Point {
+    pub fn point_to_world(&self, value:ScreenPoint) -> Point {
         self.transform() * value.0
+    }
+    #[must_use]
+    pub fn vec2_to_world(&self, value:ScreenVec2) -> Vec2 {
+        value.0 * self.scale
     }
 
     #[must_use]
@@ -71,7 +64,8 @@ impl Camera {
     }
 
     fn default_pos(&self, window:&Window) -> Point {
-        (window.size.to_vec2() * -0.5).to_point()
+        // (at the default scale)
+        (window.size.0 * -0.5).to_point()
     }
 
     pub fn go_to_default_pos(&mut self, window:&Window) {
@@ -94,7 +88,7 @@ impl Camera {
                 // mouse * scale_i + pos_i = mouse * scale_f + pos_f
                 // mouse * (scale_i-scale_f) + pos_i = pos_f
                 // zoom_correction = mouse * (scale_i-scale_f)
-                let zoom_correction = state.zoom_point.to_vec2() * (self.scale - new_scale);
+                let zoom_correction = state.zoom_point.to_vec2().0 * (self.scale - new_scale);
                 state.velocity *= adjusted_decay;
                 self.pos += state.velocity * delta_time + zoom_correction;
                 self.scale = new_scale;
@@ -128,9 +122,9 @@ impl Camera {
         state.target_scale = state.target_scale.clamp(0.25, 16.);
     }
 
-    pub fn drag_input(&mut self, distance:Vec2) {
+    pub fn drag_input(&mut self, distance:ScreenVec2) {
         if let Some(_) = self.cancel_homing() {
-            self.pos += -distance * self.scale;
+            self.pos += -distance.0 * self.scale;
         }
     }
 

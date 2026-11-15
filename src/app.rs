@@ -54,7 +54,7 @@ impl ApplicationHandler for AppHandler {
                 input::keyboard_input(event, &mut game.state, &game.window);
             },
             (WindowEvent::CursorMoved { device_id:_, position }, Some(game)) => {
-                input::mouse_moved(game.window.to_screen(position), &mut game.state);
+                input::mouse_moved(game.window.point_to_screen(position), &mut game.state);
             },
             (WindowEvent::MouseWheel { device_id:_, delta, phase:_ }, Some(game)) => {
                 input::mouse_scroll(match delta {
@@ -66,7 +66,7 @@ impl ApplicationHandler for AppHandler {
                 input::mouse_input(state, button, &mut game.state);
             },
             (WindowEvent::RedrawRequested, Some(game)) => {
-                game.window.render(|| game.renderer.draw_scene(&game.state.render_state));
+                game.window.render(|w| game.renderer.draw_scene(&game.state.render_state, w));
             },
             _ => {},
         }
