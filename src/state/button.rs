@@ -1,6 +1,6 @@
 use crate::game::GameState;
 use crate::grid::GridPoint;
-use crate::input::{Inputable, button::{Button as InputButton, NewButtonArgs as NewInputButtonArgs}};
+use crate::input::button::{Button as InputButton, NewButtonArgs as NewInputButtonArgs};
 use crate::render::{Renderer, Renderable, button::{Button as RenderButton, NewButtonArgs as NewRenderButtonArgs}};
 use crate::state::State;
 

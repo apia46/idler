@@ -11,7 +11,7 @@ use crate::state::State;
 mod state;
 mod components;
 
-pub use state::InputState;
+pub use state::{InputState, Hover};
 pub use components::{button, upgrade, resource};
 
 #[derive(Educe)]
@@ -22,6 +22,8 @@ pub struct UserState {
     pub mouse_grid_point: GridPoint,
     pub camera_drag: bool,
     pub held_keys: HashSet<KeyCode>,
+    // sticky; doesnt clear if you stop hovering
+    pub hover_list: Vec<Hover>,
 }
 
 pub fn mouse_moved(to:ScreenPoint, state:&mut State) {
@@ -121,19 +123,19 @@ pub struct MouseInputContext<'a> {
 
 pub struct HoverContext<'a> {
     user_state:&'a UserState,
+}
+
+pub struct HoverInfoContext<'a> {
+    user_state:&'a UserState,
     game_state:&'a GameState
 }
 
 pub trait Inputable {
-    type NewArgs;
-    #[must_use]
-    fn new(args:Self::NewArgs) -> Self;
-
     fn update(&mut self, ctx:&mut UpdateContext) {
         _ = ctx;
     }
 
-    fn hover(&self, ctx:&mut HoverContext) -> Option<HoverInfo> {
+    fn hovered(&self, ctx:&mut HoverContext) -> Option<Hover> {
         _ = ctx;
         None
     }

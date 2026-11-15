@@ -26,6 +26,11 @@ pub struct NewUpgradeArgs {
 }
 
 impl Upgrade {
+    pub fn new(args: NewUpgradeArgs) -> Self {
+        let NewUpgradeArgs { key, position, reference, resource_reference, cost } = args;
+        Upgrade { key, position, state: InteractState::Disabled, reference, resource_reference, cost }
+    }
+
     fn disable(&self, game_state:&GameState) -> bool {
         game_state.fetch(self.reference).purchased || game_state.fetch(self.resource_reference) < self.cost
     }
@@ -41,12 +46,6 @@ impl Upgrade {
 }
 
 impl Inputable for Upgrade {
-    type NewArgs = NewUpgradeArgs;
-    fn new(args: NewUpgradeArgs) -> Self {
-        let NewUpgradeArgs { key, position, reference, resource_reference, cost } = args;
-        Upgrade { key, position, state: InteractState::Disabled, reference, resource_reference, cost }
-    }
-
     fn update(&mut self, ctx:&mut UpdateContext) {
         self.state = button::next_state(self.state, self.position, ctx.user_state, self.disable(ctx.game_state));
     }

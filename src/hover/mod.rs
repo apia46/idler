@@ -4,6 +4,7 @@ use vello::peniko::Color;
 use winit::event::{ElementState, MouseButton};
 
 use crate::grid::GridPoint;
+use crate::input::Hover;
 use crate::render::draw::BuildTextArgs;
 use crate::render::{Renderer, Renderable};
 use crate::render::hover::{HoverTile, NewHoverTile};
@@ -37,8 +38,17 @@ pub struct HoverInfo {
 }
 
 pub fn update_hover(state: &mut State) {
-    state.input_state.update_hovers(&state.game_state, &mut state.hover_infos);
+    let new_hovers = state.input_state.get_hovers();
+    if !new_hovers.is_empty() {
+        state.input_state.user_state.hover_list = new_hovers;
+    }
+    state.hover_infos = state.input_state.user_state.hover_list.iter().map(|hover| {
+        match hover {
+            Hover::ResourceTree(key, index) => state.input_state.resource_trees[key].hover_info(*index, &state.game_state)
+        }
+    }).collect();
 }
+
 
 pub fn draw(renderer: &mut Renderer, hovers: &Vec<HoverInfo>) {
     let mut pos:Vec2 = Vec2::new(20., 20.,);

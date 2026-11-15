@@ -1,6 +1,6 @@
 use crate::game::{GameState, Reference, Upgrade as GameUpgrade};
 use crate::grid::GridPoint;
-use crate::input::{Inputable, upgrade::{Upgrade as InputUpgrade, NewUpgradeArgs as NewInputUpgradeArgs}};
+use crate::input::upgrade::{Upgrade as InputUpgrade, NewUpgradeArgs as NewInputUpgradeArgs};
 use crate::render::{Renderable, Renderer, upgrade::{Upgrade as RenderUpgrade, NewUpgradeArgs as NewRenderUpgradeArgs}};
 use crate::num::{Cost, Quantity};
 use crate::state::State;

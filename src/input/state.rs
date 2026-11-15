@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use winit::event::{ElementState, MouseButton};
 
-use crate::{game::GameState, input::{Inputable, MouseInputResponse, UserState, UpdateContext, MouseInputContext, HoverContext, hover::HoverInfo, button::Button, upgrade::Upgrade, resource::ResourceTree}};
+use crate::{game::GameState, input::{Inputable, MouseInputResponse, UserState, UpdateContext, MouseInputContext, HoverContext, button::Button, upgrade::Upgrade, resource::ResourceTree}};
 use crate::state::keys::*;
 
 macro_rules! input_state {
@@ -27,6 +27,7 @@ macro_rules! input_state {
                 )*
             }
 
+            #[must_use]
             pub fn mouse_input(&mut self, button_state:ElementState, mouse_button:MouseButton, game_state:&mut GameState) -> MouseInputResponse {
                 let mut response = MouseInputResponse::default();
                 $(
@@ -40,17 +41,19 @@ macro_rules! input_state {
                 response
             }
 
-            pub fn update_hovers(&self, game_state:&GameState, infos: &mut Vec<HoverInfo>) {
-                infos.clear();
+            #[must_use]
+            pub fn get_hovers(&self) -> Vec<Hover> {
+                let mut hovers = Vec::new();
                 $(
                     for inputable in self.$name.values() {
-                        if let Some(info) = Inputable::hover(inputable, &mut HoverContext {
-                            user_state: &self.user_state, game_state
+                        if let Some(key) = Inputable::hovered(inputable, &mut HoverContext {
+                            user_state: &self.user_state
                         }) {
-                            infos.push(info);
+                            hovers.push(key);
                         }
                     }
                 )*
+                hovers
             }
         }
     }
@@ -60,5 +63,9 @@ input_state! {
     resource_trees: HashMap<ResourceKey, ResourceTree>,
     buttons: HashMap<ButtonKey, Button>,
     upgrades: HashMap<UpgradeKey, Upgrade>,
+}
+
+pub enum Hover {
+    ResourceTree(ResourceKey, usize),
 }
 

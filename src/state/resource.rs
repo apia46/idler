@@ -2,7 +2,6 @@ use vello::peniko::Color;
 
 use crate::game::{GameState, Reference, Upgrade as GameUpgrade};
 use crate::grid::{Direction, GridPoint};
-use crate::input::Inputable;
 use crate::num::{Cost, Number, Quantity};
 use crate::render::Renderable;
 use crate::render::{Renderer, resource::{ResourceTree as RenderResourceTree, NewResourceTreeArgs as NewRenderResourceTreeArgs, NewSegmentArgs as NewRenderSegmentArgs}};
@@ -133,6 +132,7 @@ impl ResourceBuilder {
                 .chain(self.upgrades.iter().map(|u| u.build_input_cell())).collect();
 
             state.input_state.resource_trees.insert(key, InputResourceTree::new(NewInputResourceTreeArgs {
+                key,
                 resource_name: self.name,
                 reference: self.reference,
                 cells,

@@ -17,17 +17,25 @@ pub struct Button {
     pressed: fn(&mut GameState),
 }
 
-impl Button {
-    pub fn state(&self) -> InteractState {
-        self.state
-    }
-}
-
 pub struct NewButtonArgs {
     pub key: ButtonKey,
     pub position: GridPoint,
     pub enabled: fn(&GameState) -> bool,
     pub pressed: fn(&mut GameState),
+}
+
+impl Button {
+    pub fn new(args:NewButtonArgs) -> Self {
+        let NewButtonArgs { key, position, pressed, enabled } = args;
+        Self {
+            key, position, enabled, pressed,
+            state: InteractState::None,
+        }
+    }
+
+    pub fn state(&self) -> InteractState {
+        self.state
+    }
 }
 
 pub fn next_state(current_state:InteractState, position:GridPoint, user_state:&UserState, disable:bool) -> InteractState {
@@ -43,15 +51,6 @@ pub fn next_state(current_state:InteractState, position:GridPoint, user_state:&U
 }
 
 impl Inputable for Button {
-    type NewArgs = NewButtonArgs;
-    fn new(args:NewButtonArgs) -> Self {
-        let NewButtonArgs { key, position, pressed, enabled } = args;
-        Self {
-            key, position, enabled, pressed,
-            state: InteractState::None,
-        }
-    }
-
     fn update(&mut self, ctx:&mut UpdateContext) {
         self.state = next_state(self.state, self.position, ctx.user_state, !(self.enabled)(ctx.game_state))
     }
