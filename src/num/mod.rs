@@ -4,6 +4,8 @@ mod types;
 
 pub use types::{Quantity, RateOfChange, Cost, Gain};
 
+use crate::util::{Lerp, Merp};
+
 const LN_E308:f64 = 709.78271289338399684324569237317280570931213758490138021957632972;
 
 const LN_EPSILON:f64 = -36.; // less than 10^-15
@@ -14,6 +16,7 @@ pub struct Number(f64);
 impl Number {
     pub const ZERO:Number = Number(f64::NEG_INFINITY);
     pub const ONE:Number = Number(0.);
+    pub const HALF:Number = Number(-0.693147180559945309417232121458176568075500134360255254120680009);
 
     #[inline(always)]
     #[must_use]
@@ -52,6 +55,10 @@ impl Number {
     #[must_use]
     pub fn powf(self, exp:f64) -> Number {
         Number(self.0 * exp)
+    }
+
+    pub fn max(self, other:Number) -> Number {
+        if other > self { other } else { self }
     }
 }
 
@@ -151,6 +158,12 @@ impl Display for Number {
             let mantissa = 10_f64.powf(exponent.fract());
             format!("e{mantissa:.3}e{}", exponent.floor())
         })
+    }
+}
+
+impl Merp<Number> for f64 {
+    fn merp(self, from:Number, to:Number) -> Number {
+        Number(self.lerp(from.0, to.0))
     }
 }
 

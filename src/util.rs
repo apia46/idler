@@ -4,7 +4,7 @@ use vello::{kurbo::{Point, Vec2}, peniko::Color};
 
 pub trait Lerp<T> {
     #[must_use]
-    fn lerp(self, from: T, to: T) -> T;
+    fn lerp(self, from:T, to:T) -> T;
 }
 
 pub trait Lerpable: Sized + Mul<f64, Output=Self> + Add<Output=Self> + Sub<Output=Self> {}
@@ -32,6 +32,7 @@ impl Lerp<Color> for f64 {
 }
 
 pub trait Remap: Sized {
+    #[must_use]
     fn remap(self, from: (Self, Self), to: (Self, Self)) -> Self;
 }
 
@@ -48,7 +49,9 @@ impl Remapable for f64 {}
 
 pub trait ComponentWise {
     #[expect(unused)]
+    #[must_use]
     fn mul(self, value:Self) -> Self;
+    #[must_use]
     fn div(self, value:Self) -> Self;
 }
 
@@ -60,5 +63,11 @@ impl ComponentWise for Vec2 {
     fn div(self, value:Self) -> Self {
         Vec2::new(self.x / value.x, self.y / value.y)
     }
+}
+
+/// multiplicative lerp
+pub trait Merp<T> {
+    #[must_use]
+    fn merp(self, from:T, to:T) -> T;
 }
 

@@ -5,9 +5,12 @@ use crate::game::Reference;
 use crate::grid::{Direction, GridPoint};
 use crate::num::{Number, Quantity};
 
+use crate::render::ProcessContext;
 use crate::render::{UpdateContext, Renderer, Renderable, camera::Camera, draw::DrawLineArgs};
 use crate::state::resource::ResourceKey;
-use crate::util::Lerp;
+use crate::util::{Lerp, Merp};
+
+const SMOOTHING:f64 = 0.001;
 
 pub struct ResourceTree {
     #[expect(unused)]
@@ -17,13 +20,15 @@ pub struct ResourceTree {
     fill_color: Color,
     back_color: Color,
     border_color: Color,
+    resource: Number,
+    smoothed_resource: Number,
 }
 
 #[derive(Clone, Copy)]
 struct Segment {
     start: Point,
     end: Point,
-    base: Quantity,
+    base: Number,
     growth: Number,
     progress: f64,
 }
@@ -57,16 +62,21 @@ impl<'a> Renderable<'a> for ResourceTree {
             let end = (start + direction * length).to_point();
             let start = start.to_point();
             segments.push(Segment {
-                start, end, base, growth, progress: 0.,
+                start, end, base: base.to_number(), growth, progress: 0.,
             });
         }
-        ResourceTree { key, reference, segments, fill_color, back_color, border_color }
+        ResourceTree { key, reference, segments, fill_color, back_color, border_color, resource: Number::HALF, smoothed_resource: Number::HALF }
     }
 
     fn update(&mut self, ctx:&mut UpdateContext) {
-        let resource = ctx.game_state.fetch(self.reference).to_number();
+        self.resource = ctx.game_state.fetch(self.reference).to_number();
+    }
+
+    fn process(&mut self, ctx:&mut ProcessContext) {
+        self.smoothed_resource = (1. - SMOOTHING.powf(ctx.delta_time)).merp(self.smoothed_resource, self.resource.max(Number::HALF));
+
         for segment in &mut self.segments {
-            segment.progress = (resource / segment.base.to_number()).logf(segment.growth).clamp(0., 1.);
+            segment.progress = (self.smoothed_resource / segment.base).logf(segment.growth).clamp(0., 1.);
         }
     }
 
