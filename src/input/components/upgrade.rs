@@ -2,13 +2,13 @@ use winit::event::{ElementState, MouseButton};
 
 use crate::game::{GameState, Reference, Upgrade as GameUpgrade};
 use crate::grid::GridPoint;
+use crate::hover::Hover;
 use crate::input::button::{self, InteractState};
 use crate::input::{Inputable, MouseInputContext, MouseInputResponse, UpdateContext};
 use crate::num::{Cost, Quantity};
 use crate::state::upgrade::UpgradeKey;
 
 pub struct Upgrade {
-    #[expect(unused)]
     key: UpgradeKey,
     position: GridPoint,
     state: InteractState,
@@ -48,6 +48,10 @@ impl Upgrade {
 impl Inputable for Upgrade {
     fn update(&mut self, ctx:&mut UpdateContext) {
         self.state = button::next_state(self.state, self.position, ctx.user_state, self.disable(ctx.game_state));
+    }
+
+    fn hovered(&self) -> Option<Hover> {
+        button::hovered(self.state).then(|| Hover::Upgrade(self.key))
     }
 
     fn mouse_input(&mut self, ctx:&mut MouseInputContext) -> MouseInputResponse {

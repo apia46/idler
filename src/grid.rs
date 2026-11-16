@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Mul};
+use std::{fmt::Display, ops::{Add, AddAssign, Mul}};
 
 use vello::kurbo::{Affine, BezPath, PathEl, Point, Vec2};
 
@@ -103,6 +103,12 @@ impl Mul<u32> for Direction {
             Direction::LUP => (-1, 0),
         };
         GridPoint::new(x*rhs as i32, y*rhs as i32)
+    }
+}
+
+impl Display for GridPoint {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("({}, {})", self.x, self.y))
     }
 }
 

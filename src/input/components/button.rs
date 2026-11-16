@@ -2,14 +2,14 @@ use winit::event::{ElementState, MouseButton};
 
 use crate::game::GameState;
 use crate::grid::GridPoint;
+use crate::hover::Hover;
 use crate::input::{Inputable, MouseInputContext, MouseInputResponse, UpdateContext, UserState};
 use crate::state::button::ButtonKey;
 
 #[derive(Clone, Copy)]
-pub enum InteractState { Disabled, None, Hovered, Pressed }
+pub enum InteractState { Disabled, DisabledHovered, None, Hovered, Pressed }
 
 pub struct Button {
-    #[expect(unused)]
     key: ButtonKey,
     position: GridPoint,
     state: InteractState,
@@ -40,7 +40,7 @@ impl Button {
 
 pub fn next_state(current_state:InteractState, position:GridPoint, user_state:&UserState, disable:bool) -> InteractState {
     if disable {
-        InteractState::Disabled
+        if user_state.mouse_grid_point == position { InteractState::DisabledHovered } else { InteractState::Disabled }
     } else {
         match (current_state, user_state.mouse_grid_point == position) {
             (InteractState::None | InteractState::Disabled, true) => InteractState::Hovered,
@@ -48,6 +48,10 @@ pub fn next_state(current_state:InteractState, position:GridPoint, user_state:&U
             (state, _) => state,
         }
     }
+}
+
+pub fn hovered(state:InteractState) -> bool {
+    matches!(state, InteractState::Hovered|InteractState::Pressed|InteractState::DisabledHovered)
 }
 
 impl Inputable for Button {
@@ -71,6 +75,10 @@ impl Inputable for Button {
             _ => false,
         };
         MouseInputResponse { hovered, consumed }
+    }
+
+    fn hovered(&self) -> Option<Hover> {
+        hovered(self.state).then(|| Hover::Button(self.key))
     }
 }
 

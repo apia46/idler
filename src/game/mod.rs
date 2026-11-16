@@ -2,6 +2,7 @@ use educe::Educe;
 use macros::parse_color;
 
 use crate::grid::{Direction, GridPoint};
+use crate::hover::HoverInfo;
 use crate::num::{Cost, Gain, Number, Quantity, RateOfChange};
 use crate::render::Renderer;
 use crate::state::resource::{NewSegmentArgs, NewUpgradeArgs};
@@ -87,6 +88,10 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
         start_button: NewButtonArgs {
             position: GridPoint::new(0, 0),
             text: |s| format!("Things: {}\n+{}\n+{}/s", s.things, s.things_per_click, s.things_rate),
+            hover: |s| Box::new([
+                crate::hover::resource_hover(s, reference!(things), "things"),
+                HoverInfo::Body(format!("+{} on click", s.things_per_click))
+            ]),
             enabled: |_| true,
             pressed: |s| s.things += s.things_per_click,
         },
@@ -128,6 +133,10 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
                 if s.boosters > 0 { format!("Boosters: {}\nCost: {} things\nEffect: x{} things", s.boosters, s.boosters_cost, s.boosters_effect) }
                 else { format!("???\nCost: {} things", s.boosters_cost) }
             },
+            hover: |s| Box::new([
+                crate::hover::resource_hover(s, reference!(boosters), "boosters"),
+                HoverInfo::Body(format!("cost: {} things\neffect: x{} things", s.boosters_cost, s.boosters_effect)),
+            ]),
             enabled: |s| s.things >= s.boosters_cost,
             pressed: |s| {
                 s.things -= s.boosters_cost;

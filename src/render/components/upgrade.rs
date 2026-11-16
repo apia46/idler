@@ -3,8 +3,9 @@ use vello::peniko::Color;
 
 use crate::game::{GameState, Reference, Upgrade as GameUpgrade};
 use crate::grid::GridPoint;
+use crate::hover::HoverInfo;
 use crate::input::button::InteractState;
-use crate::num::Cost;
+use crate::num::{Cost, Quantity};
 use crate::render::ProcessContext;
 use crate::render::draw::{DrawHexagonArgs, Style};
 use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer, UpdateContext};
@@ -32,6 +33,7 @@ pub struct Upgrade {
     key: UpgradeKey,
     position: GridPoint,
     resource_name: &'static str,
+    resource_reference: Reference<Quantity>,
     description: fn(&GameState) -> String,
     cost: Cost,
     reference: Reference<GameUpgrade>,
@@ -44,6 +46,7 @@ pub struct NewUpgradeArgs<'a> {
     pub key: UpgradeKey,
     pub position: GridPoint,
     pub resource_name: &'static str,
+    pub resource_reference: Reference<Quantity>,
     pub description: fn(&GameState) -> String,
     pub cost: Cost,
     pub reference: Reference<GameUpgrade>,
@@ -72,14 +75,23 @@ fn build_text(game_state:&GameState, renderer:&mut Renderer, reference:Reference
     })
 }
 
+impl Upgrade {
+    pub fn hover_info(&self, game_state:&GameState) -> [HoverInfo; 2] {
+        [
+            crate::hover::resource_hover(game_state, self.resource_reference, self.resource_name),
+            HoverInfo::Body(format!("upgrade at {}: {}\ncost: {}", self.position, (self.description)(game_state), self.cost)),
+        ]
+    }
+}
+
 impl<'a> Renderable<'a> for Upgrade {
     type NewArgs = NewUpgradeArgs<'a>;
     fn new(args:NewUpgradeArgs<'a>) -> Self {
-        let NewUpgradeArgs { key, position, resource_name, description, cost, reference, renderer, state } = args;
+        let NewUpgradeArgs { key, position, resource_name, resource_reference, description, cost, reference, renderer, state } = args;
         let layout = build_text(state, renderer, reference, resource_name, (description)(state), cost, InteractState::Disabled);
 
         Upgrade {
-            key, position, resource_name, description, cost, reference,
+            key, position, resource_name, resource_reference, description, cost, reference,
             layout, bg_color: BG_COLOR, state: UpgradeState::Unavailable,
         }
     }
@@ -92,7 +104,7 @@ impl<'a> Renderable<'a> for Upgrade {
         } else { 'unpurchased: {
             let time = if let UpgradeState::Available { time, .. } = self.state { time } else { 0. };
             let state = match interact_state {
-                InteractState::Disabled => break 'unpurchased UpgradeState::Unavailable,
+                InteractState::Disabled|InteractState::DisabledHovered => break 'unpurchased UpgradeState::Unavailable,
                 InteractState::None => AvailableState::Unhovered,
                 InteractState::Hovered => AvailableState::Hovered,
                 InteractState::Pressed => AvailableState::Pressed,

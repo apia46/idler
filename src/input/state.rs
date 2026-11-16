@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use winit::event::{ElementState, MouseButton};
 
-use crate::{game::GameState, input::{Inputable, MouseInputResponse, UserState, UpdateContext, MouseInputContext, HoverContext, button::Button, upgrade::Upgrade, resource::ResourceTree}};
+use crate::game::GameState;
+use crate::input::{Inputable, MouseInputResponse, UserState, UpdateContext, MouseInputContext, button::Button, upgrade::Upgrade, resource::ResourceTree};
+use crate::hover::Hover;
 use crate::state::keys::*;
 
 macro_rules! input_state {
@@ -46,9 +48,7 @@ macro_rules! input_state {
                 let mut hovers = Vec::new();
                 $(
                     for inputable in self.$name.values() {
-                        if let Some(key) = Inputable::hovered(inputable, &mut HoverContext {
-                            user_state: &self.user_state
-                        }) {
+                        if let Some(key) = Inputable::hovered(inputable) {
                             hovers.push(key);
                         }
                     }
@@ -63,9 +63,5 @@ input_state! {
     resource_trees: HashMap<ResourceKey, ResourceTree>,
     buttons: HashMap<ButtonKey, Button>,
     upgrades: HashMap<UpgradeKey, Upgrade>,
-}
-
-pub enum Hover {
-    ResourceTree(ResourceKey, usize),
 }
 

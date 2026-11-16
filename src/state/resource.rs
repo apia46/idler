@@ -52,6 +52,7 @@ struct SegmentBuilder {
     length: u32,
     base: Quantity,
     growth: Number,
+    include_first: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -67,7 +68,6 @@ struct UpgradeBuilder {
     description: fn(&GameState) -> String,
     cost: Cost,
     reference: Reference<GameUpgrade>,
-    growth: Number,
 }
 
 impl ResourceBuilder {
@@ -81,7 +81,7 @@ impl ResourceBuilder {
             reference, name, start_button, fill_color, back_color, border_color,
             segments: vec![SegmentBuilder {
                 start: start_button.position, direction: start_direction, length: 1,
-                base: Quantity::from(growth.powf(-0.5)), growth,
+                base: Quantity::from(growth.powf(-0.5)), growth, include_first: false,
             }],
             upgrades: vec![],
             state: ResourceBuilderState { position: start_button.position + start_direction * 1, value: Quantity::ONE, growth }
@@ -94,7 +94,7 @@ impl ResourceBuilder {
         let half_growth = self.state.growth.powf(0.5);
         let total_growth = self.state.growth.powf(length as f64);
         self.segments.push(SegmentBuilder {
-            start: self.state.position, direction, length, base: (self.state.value.to_number() * half_growth).into(), growth: total_growth
+            start: self.state.position, direction, length, base: (self.state.value.to_number() * half_growth).into(), growth: total_growth, include_first: true
         });
         self.state.position += direction * length;
         *self.state.value.as_number() *= total_growth;
@@ -117,7 +117,7 @@ impl ResourceBuilder {
             branch = branch.segment(NewSegmentArgs { direction, length: 1 });
             branch.upgrades.push(UpgradeBuilder {
                 position: branch.state.position, description, cost: Cost::from(branch.state.value.to_number()),
-                reference, growth: branch.state.growth,
+                reference,
             });
             branch
         });
@@ -128,8 +128,7 @@ impl ResourceBuilder {
         state.new_button(self.start_button, renderer);
 
         state.entities.resources.add(|key| {
-            let cells = self.segments.iter().flat_map(|s| s.build_input_cell())
-                .chain(self.upgrades.iter().map(|u| u.build_input_cell())).collect();
+            let cells = self.segments.iter().flat_map(|s| s.build_input_cell()).collect();
 
             state.input_state.resource_trees.insert(key, InputResourceTree::new(NewInputResourceTreeArgs {
                 key,
@@ -157,16 +156,16 @@ impl ResourceBuilder {
 impl SegmentBuilder {
     #[must_use]
     fn build_render(self) -> NewRenderSegmentArgs {
-        let SegmentBuilder { start, direction, length, base, growth } = self;
+        let SegmentBuilder { start, direction, length, base, growth, .. } = self;
         NewRenderSegmentArgs { start, direction, length, base, growth }
     }
 
     #[must_use]
     fn build_input_cell(self) -> impl Iterator<Item=NewInputCellArgs> {
-        let SegmentBuilder { start, direction, length, base, growth } = self;
-        (0..length).map(move |i| {
+        let SegmentBuilder { start, direction, length, base, growth, include_first } = self;
+        (if include_first { 0..length } else { 1..length } ).map(move |i| {
             let base = (base.to_number() * growth.powf((i as f64 - 0.5) / length as f64)).into();
-            NewInputCellArgs { pos: start + direction * i, base, growth }
+            NewInputCellArgs { pos: start + direction * i, base, growth: growth / Number::from(length as f64) }
         })
     }
 }
@@ -176,12 +175,6 @@ impl UpgradeBuilder {
     fn build_upgrade(self, resource_name:&'static str, resource_reference:Reference<Quantity>) -> NewInternalUpgradeArgs {
         let UpgradeBuilder { position, description, cost, reference, .. } = self;
         NewInternalUpgradeArgs { position, description, cost, reference, resource_name, resource_reference }
-    }
-
-    #[must_use]
-    fn build_input_cell(self) -> NewInputCellArgs {
-        let UpgradeBuilder { position, cost, growth, .. } = self;
-        NewInputCellArgs { pos: position, base: cost.to_number().into(), growth }
     }
 }
 

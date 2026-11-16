@@ -4,14 +4,14 @@ use educe::Educe;
 use vello::kurbo::Vec2;
 use winit::{event::{ElementState, KeyEvent, MouseButton}, keyboard::{KeyCode, PhysicalKey}};
 
-use crate::{game::GameState, grid::GridPoint, hover, window::Window};
+use crate::{game::GameState, grid::GridPoint, hover::{self, Hover}, window::Window};
 use crate::render::camera::ScreenPoint;
 use crate::state::State;
 
 mod state;
 mod components;
 
-pub use state::{InputState, Hover};
+pub use state::InputState;
 pub use components::{button, upgrade, resource};
 
 #[derive(Educe)]
@@ -119,17 +119,12 @@ pub struct MouseInputContext<'a> {
     game_state:&'a mut GameState
 }
 
-pub struct HoverContext<'a> {
-    user_state:&'a UserState,
-}
-
 pub trait Inputable {
     fn update(&mut self, ctx:&mut UpdateContext) {
         _ = ctx;
     }
 
-    fn hovered(&self, ctx:&mut HoverContext) -> Option<Hover> {
-        _ = ctx;
+    fn hovered(&self) -> Option<Hover> {
         None
     }
 

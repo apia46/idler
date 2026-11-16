@@ -20,7 +20,7 @@ impl State {
     pub fn new_upgrade(&mut self, args:NewUpgradeArgs, renderer:&mut Renderer) {
         let NewUpgradeArgs { position, description, cost, reference, resource_name, resource_reference } = args;
         self.entities.upgrades.add(|key| {
-            self.render_state.upgrades.insert(key, RenderUpgrade::new(NewRenderUpgradeArgs { key, cost, resource_name, description, position, reference, renderer, state: &self.game_state }));
+            self.render_state.upgrades.insert(key, RenderUpgrade::new(NewRenderUpgradeArgs { key, cost, resource_name, resource_reference, description, position, reference, renderer, state: &self.game_state }));
             self.input_state.upgrades.insert(key, InputUpgrade::new(NewInputUpgradeArgs { key, cost, position, reference, resource_reference }));
         });
     }

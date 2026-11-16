@@ -3,6 +3,7 @@ use vello::peniko::Color;
 
 use crate::game::GameState;
 use crate::grid::GridPoint;
+use crate::hover::HoverInfo;
 use crate::input::button::InteractState;
 use crate::render::UpdateContext;
 use crate::render::draw::{DrawHexagonArgs, Style};
@@ -22,6 +23,7 @@ pub struct Button {
     key: ButtonKey,
     position: GridPoint,
     text_fn: fn(&GameState) -> String,
+    hover_fn: fn(&GameState) -> Box<[HoverInfo]>,
     layout: TextLayout,
     bg_color: Color,
 }
@@ -30,6 +32,7 @@ pub struct NewButtonArgs<'a> {
     pub key: ButtonKey,
     pub position: GridPoint,
     pub text: fn(&GameState) -> String,
+    pub hover: fn(&GameState) -> Box<[HoverInfo]>,
     pub renderer:&'a mut Renderer,
     pub state:&'a GameState,
 }
@@ -43,13 +46,19 @@ fn build_text(renderer:&mut Renderer, text:&str, state:InteractState) -> TextLay
     })
 }
 
+impl Button {
+    pub fn hover_info(&self, game_state:&GameState) -> Box<[HoverInfo]> {
+        (self.hover_fn)(game_state)
+    }
+}
+
 impl<'a> Renderable<'a> for Button {
     type NewArgs = NewButtonArgs<'a>;
     fn new(args:NewButtonArgs) -> Self {
-        let NewButtonArgs { key, position, text:text_fn, renderer, state } = args;
+        let NewButtonArgs { key, position, text:text_fn, hover:hover_fn, renderer, state } = args;
         let text = &(args.text)(state);
         Button {
-            key, position, text_fn,
+            key, position, text_fn, hover_fn,
             layout: build_text(renderer, text, InteractState::None),
             bg_color: BG_COLOR,
         }
@@ -62,7 +71,7 @@ impl<'a> Renderable<'a> for Button {
             InteractState::None => BG_COLOR,
             InteractState::Hovered => HOVERED_COLOR,
             InteractState::Pressed => PRESSED_COLOR,
-            InteractState::Disabled => DISABLED_COLOR,
+            InteractState::Disabled|InteractState::DisabledHovered => DISABLED_COLOR,
         };
         self.layout = build_text(ctx.renderer, text, interact_state);
     }
