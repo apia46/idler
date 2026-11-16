@@ -164,10 +164,8 @@ impl SegmentBuilder {
     #[must_use]
     fn build_input_cell(self) -> impl Iterator<Item=NewInputCellArgs> {
         let SegmentBuilder { start, direction, length, base, growth } = self;
-            println!("{self:?}");
         (0..length).map(move |i| {
             let base = (base.to_number() * growth.powf((i as f64 - 0.5) / length as f64)).into();
-            println!("{base}");
             NewInputCellArgs { pos: start + direction * i, base, growth }
         })
     }

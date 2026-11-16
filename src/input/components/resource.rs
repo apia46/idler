@@ -1,7 +1,7 @@
 use crate::game::{GameState, Reference};
 use crate::grid::GridPoint;
 use crate::hover::HoverInfo;
-use crate::input::{Hover, HoverContext, HoverInfoContext, Inputable};
+use crate::input::{Hover, HoverContext, Inputable};
 use crate::num::{Number, Quantity};
 use crate::state::keys::ResourceKey;
 

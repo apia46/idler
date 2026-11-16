@@ -1,6 +1,6 @@
 use std::ops::{Add, Div, Mul, Sub};
 
-use vello::kurbo::{Point, Vec2};
+use vello::{kurbo::{Point, Vec2}, peniko::Color};
 
 pub trait Lerp<T> {
     #[must_use]
@@ -22,6 +22,12 @@ impl Lerpable for Vec2 {}
 impl Lerp<Point> for f64 {
     fn lerp(self, from:Point, to:Point) -> Point {
         self.lerp(from.to_vec2(), to.to_vec2()).to_point()
+    }
+}
+impl Lerp<Color> for f64 {
+    fn lerp(self, from:Color, to:Color) -> Color {
+        let value = self.clamp(0., 1.) as f32;
+        from * (1. - value) + to * value
     }
 }
 

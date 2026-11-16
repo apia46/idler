@@ -4,7 +4,7 @@ use educe::Educe;
 use vello::kurbo::Vec2;
 use winit::{event::{ElementState, KeyEvent, MouseButton}, keyboard::{KeyCode, PhysicalKey}};
 
-use crate::{game::GameState, grid::GridPoint, hover::{self, HoverInfo}, window::Window};
+use crate::{game::GameState, grid::GridPoint, hover, window::Window};
 use crate::render::camera::ScreenPoint;
 use crate::state::State;
 
@@ -22,8 +22,6 @@ pub struct UserState {
     pub mouse_grid_point: GridPoint,
     pub camera_drag: bool,
     pub held_keys: HashSet<KeyCode>,
-    // sticky; doesnt clear if you stop hovering
-    pub hover_list: Vec<Hover>,
 }
 
 pub fn mouse_moved(to:ScreenPoint, state:&mut State) {
@@ -123,11 +121,6 @@ pub struct MouseInputContext<'a> {
 
 pub struct HoverContext<'a> {
     user_state:&'a UserState,
-}
-
-pub struct HoverInfoContext<'a> {
-    user_state:&'a UserState,
-    game_state:&'a GameState
 }
 
 pub trait Inputable {

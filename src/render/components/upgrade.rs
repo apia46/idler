@@ -5,15 +5,18 @@ use crate::game::{GameState, Reference, Upgrade as GameUpgrade};
 use crate::grid::GridPoint;
 use crate::input::button::InteractState;
 use crate::num::Cost;
+use crate::render::ProcessContext;
 use crate::render::draw::{DrawHexagonArgs, Style};
 use crate::render::{camera::Camera, draw::{BuildTextArgs, TextLayout}, Renderable, Renderer, UpdateContext};
 use crate::state::upgrade::UpgradeKey;
+use crate::util::Lerp;
 
 const FONT_SIZE:f32 = 12.;
 const BORDER_COLOR:Color = parse_color!("#444444");
 
 const TEXT_COLOR:Color = parse_color!("#ffffff");
 const BG_COLOR:Color = parse_color!("#666666");
+const BG_HIGHLIGHT_COLOR:Color = parse_color!("#446688");
 
 const HOVERED_COLOR:Color = parse_color!("#808080");
 
@@ -34,6 +37,7 @@ pub struct Upgrade {
     reference: Reference<GameUpgrade>,
     layout: TextLayout,
     bg_color: Color,
+    state: UpgradeState,
 }
 
 pub struct NewUpgradeArgs<'a> {
@@ -45,6 +49,16 @@ pub struct NewUpgradeArgs<'a> {
     pub reference: Reference<GameUpgrade>,
     pub renderer:&'a mut Renderer,
     pub state:&'a GameState,
+}
+
+enum UpgradeState {
+    Unavailable,
+    Available { time: f64, state: AvailableState },
+    Purchased,
+}
+
+enum AvailableState {
+    Unhovered, Hovered, Pressed
 }
 
 #[must_use]
@@ -66,22 +80,46 @@ impl<'a> Renderable<'a> for Upgrade {
 
         Upgrade {
             key, position, resource_name, description, cost, reference,
-            layout, bg_color: BG_COLOR,
+            layout, bg_color: BG_COLOR, state: UpgradeState::Unavailable,
         }
     }
 
     fn update(&mut self, ctx:&mut UpdateContext) {
         let interact_state = ctx.input_state.upgrades[&self.key].state();
-        self.bg_color = if ctx.game_state.fetch(self.reference).purchased { PURCHASED_BG_COLOR }
-        else {
-            match interact_state {
-                InteractState::None => BG_COLOR,
-                InteractState::Hovered => HOVERED_COLOR,
-                InteractState::Pressed => PRESSED_COLOR,
-                InteractState::Disabled => DISABLED_COLOR,
+        let purchased = ctx.game_state.fetch(self.reference).purchased;
+        self.state = if purchased {
+            UpgradeState::Purchased
+        } else { 'unpurchased: {
+            let time = if let UpgradeState::Available { time, .. } = self.state { time } else { 0. };
+            let state = match interact_state {
+                InteractState::Disabled => break 'unpurchased UpgradeState::Unavailable,
+                InteractState::None => AvailableState::Unhovered,
+                InteractState::Hovered => AvailableState::Hovered,
+                InteractState::Pressed => AvailableState::Pressed,
+            };
+            UpgradeState::Available { time, state }
+        }};
+        self.layout = build_text(ctx.game_state, ctx.renderer, self.reference, self.resource_name, (self.description)(ctx.game_state), self.cost, interact_state);
+    }
+
+    fn process(&mut self, ctx:&mut ProcessContext) {
+        if let UpgradeState::Available { time, .. } = &mut self.state {
+            *time += ctx.delta_time;
+        }
+        self.bg_color = {
+            match &self.state {
+                UpgradeState::Purchased => PURCHASED_BG_COLOR,
+                UpgradeState::Unavailable => DISABLED_COLOR,
+                UpgradeState::Available { time, state } => {
+                    let cycle = (1.-(time*3.).cos())/2.;
+                    match state {
+                        AvailableState::Unhovered => cycle.lerp(BG_COLOR, BG_HIGHLIGHT_COLOR),
+                        AvailableState::Hovered => HOVERED_COLOR,
+                        AvailableState::Pressed => PRESSED_COLOR,
+                    }
+                }
             }
         };
-        self.layout = build_text(ctx.game_state, ctx.renderer, self.reference, self.resource_name, (self.description)(ctx.game_state), self.cost, interact_state);
     }
 
     fn draw(&self, renderer:&mut Renderer, camera:&Camera) {
