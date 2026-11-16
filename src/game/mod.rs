@@ -30,6 +30,8 @@ pub struct GameState {
     pub things_rate: RateOfChange,
     #[educe(Default=0)]
     pub boosters: Quantity,
+    #[educe(Default=0)]
+    pub max_boosters: Quantity,
     pub boosters_cost: Cost,
     #[educe(Default=1)]
     pub boosters_effect: Number,
@@ -47,6 +49,7 @@ pub struct Upgrades {
     pub gen_1: Upgrade,
     pub gen_2: Upgrade,
     pub pow_1: Upgrade,
+    pub boosters_1: Upgrade,
 }
 
 impl GameState {
@@ -68,7 +71,9 @@ impl GameState {
             .mul_boost(self.boosters > 0, self.boosters_effect)
             .pow_boost(self.upgrades.pow_1, 2)
         ;
-        self.boosters_cost = Cost::from(1024).mul_boost(true, Number::from(1.4) ^ self.boosters.to_number());
+        self.boosters_cost = Cost::from(1024).mul_boost(true,
+            Number::from(1.4) ^ (self.boosters.to_number().mul_boost(self.upgrades.boosters_1, 0.5))
+        );
         self.boosters_effect = Number::from(1.2) ^ self.boosters.to_number();
     }
 
@@ -90,7 +95,7 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
             text: |s| format!("Things: {}\n+{}\n+{}/s", s.things, s.things_per_click, s.things_rate),
             hover: |s| Box::new([
                 crate::hover::resource_hover(s, reference!(things), "things"),
-                HoverInfo::Body(format!("+{} on click", s.things_per_click))
+                HoverInfo::Body(format!("+{} on click\n+{}/s", s.things_per_click, s.things_rate))
             ]),
             enabled: |_| true,
             pressed: |s| s.things += s.things_per_click,
@@ -130,27 +135,34 @@ pub fn test_section(state:&mut State, renderer:&mut Renderer) {
         start_button: NewButtonArgs {
             position: GridPoint::new(0, -9),
             text: |s| {
-                if s.boosters > 0 { format!("Boosters: {}\nCost: {} things\nEffect: x{} things", s.boosters, s.boosters_cost, s.boosters_effect) }
+                if s.max_boosters > 0 { format!("Boosters: {}\nCost: {} things\nEffect: x{} things", s.boosters, s.boosters_cost, s.boosters_effect) }
                 else { format!("???\nCost: {} things", s.boosters_cost) }
             },
             hover: |s| Box::new([
-                crate::hover::resource_hover(s, reference!(boosters), "boosters"),
-                HoverInfo::Body(format!("cost: {} things\neffect: x{} things", s.boosters_cost, s.boosters_effect)),
+                if s.max_boosters > 0 { crate::hover::resource_hover(s, reference!(boosters), "boosters") }
+                else { HoverInfo::Heading("???".into()) },
+                if s.max_boosters > 0 { HoverInfo::Body(format!("cost: {} things\neffect: x{} things", s.boosters_cost, s.boosters_effect)) }
+                else { HoverInfo::Body(format!("cost: {} things", s.boosters_cost)) },
+                crate::hover::resource_hover(s, reference!(things), "things"),
             ]),
             enabled: |s| s.things >= s.boosters_cost,
             pressed: |s| {
                 s.things -= s.boosters_cost;
-                s.boosters += Number::ONE;
+                let gain = Gain::ONE.mul_boost(s.upgrades.boosters_1, 2);
+                s.boosters += gain;
+                s.max_boosters += gain;
             }
         },
         start_direction: Direction::UP,
-        growth: Number::from(2).powf(0.5),
+        growth: Number::from(2),
         fill_color: parse_color!("#3333ff"),
         back_color: parse_color!("#111266"),
         border_color: parse_color!("#858cad") }
     )
+        .segment(NewSegmentArgs { direction: Direction::UP, length: 1 })
+        .upgrade(NewUpgradeArgs { reference: reference!(upgrades.boosters_1), direction: Direction::RUP, description: |_| format!("x2 boosters") })
         .segment(NewSegmentArgs { direction: Direction::UP, length: 2 })
-        .upgrade(NewUpgradeArgs { reference: reference!(upgrades.pow_1), direction: Direction::RUP, description: |_| format!("^2 things per second") })
+        .upgrade(NewUpgradeArgs { reference: reference!(upgrades.pow_1), direction: Direction::LUP, description: |_| format!("^2 things per second") })
     .build(state, renderer);
 }
 

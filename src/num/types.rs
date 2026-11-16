@@ -201,17 +201,33 @@ macro_rules! boost {
     ($fn:ident, $op:ident) => {
         #[allow(unused)]
         pub fn $fn(self, active:impl Into<bool>, value:impl Into<Number>) -> Self {
-            if active.into() { Self(self.0.$op(value.into())) } else { self }
+            if active.into() { self.$op(value.into()) } else { self }
         }
     }
+}
+
+macro_rules! boost_impl {
+    ($fn:ident) => {
+        #[allow(unused)]
+        pub fn $fn(self, active:impl Into<bool>, value:impl Into<Number>) -> Self {
+            Self(self.0.$fn(active, value.into()))
+        }
+    }
+}
+
+
+impl Number {
+    boost!(add_boost, add);
+    boost!(mul_boost, mul);
+    boost!(pow_boost, bitxor);
 }
 
 macro_rules! boost_type {
     ($ty:ident) => {
         impl $ty {
-            boost!(add_boost, add);
-            boost!(mul_boost, mul);
-            boost!(pow_boost, bitxor);
+            boost_impl!(add_boost);
+            boost_impl!(mul_boost);
+            boost_impl!(pow_boost);
         }
     }
 }

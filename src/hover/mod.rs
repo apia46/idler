@@ -85,6 +85,7 @@ impl HoverState {
                 },
                 HoverInfo::Body(string) => {
                     text_line(string, 12., parse_color!("#dbe3f0"), renderer, &mut pos);
+                    pos.y += 6.;
                 }
             }
         }
